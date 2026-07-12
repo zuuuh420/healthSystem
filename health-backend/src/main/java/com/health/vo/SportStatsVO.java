@@ -10,6 +10,11 @@ import java.util.List;
 public class SportStatsVO {
 
     /**
+     * 统计天数
+     */
+    private Integer days;
+
+    /**
      * 总运动时长（分钟）
      */
     private Integer totalMinutes;

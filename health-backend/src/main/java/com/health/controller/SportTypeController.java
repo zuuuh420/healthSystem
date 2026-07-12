@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
  * 运动类型Controller
  */
 @RestController
-@RequestMapping("/api/sport-types")
+@RequestMapping("/sport-types")
 public class SportTypeController {
 
     @Autowired
@@ -44,10 +44,13 @@ public class SportTypeController {
     }
 
     /**
-     * 新增运动类型
+     * 新增运动类型（仅管理员）
      */
     @PostMapping
     public Result<SportType> addSportType(@RequestBody SportType sportType) {
+        if (!SecurityUtil.isAdmin()) {
+            return Result.error(403, "仅管理员可以新增运动类型");
+        }
         boolean success = sportTypeService.addSportType(sportType);
         if (success) {
             return Result.success("新增成功", sportType);
@@ -56,10 +59,13 @@ public class SportTypeController {
     }
 
     /**
-     * 修改运动类型
+     * 修改运动类型（仅管理员）
      */
     @PutMapping("/{id}")
     public Result<Void> updateSportType(@PathVariable Long id, @RequestBody SportType sportType) {
+        if (!SecurityUtil.isAdmin()) {
+            return Result.error(403, "仅管理员可以修改运动类型");
+        }
         sportType.setId(id);
         boolean success = sportTypeService.updateSportType(sportType);
         if (success) {
@@ -69,10 +75,13 @@ public class SportTypeController {
     }
 
     /**
-     * 删除运动类型
+     * 删除运动类型（仅管理员）
      */
     @DeleteMapping("/{id}")
     public Result<Void> deleteSportType(@PathVariable Long id) {
+        if (!SecurityUtil.isAdmin()) {
+            return Result.error(403, "仅管理员可以删除运动类型");
+        }
         boolean success = sportTypeService.deleteSportType(id);
         if (success) {
             return Result.success("删除成功", null);

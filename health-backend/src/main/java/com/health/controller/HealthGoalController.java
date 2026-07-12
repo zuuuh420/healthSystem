@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
  * 健康目标Controller
  */
 @RestController
-@RequestMapping("/api/health-goals")
+@RequestMapping("/health-goals")
 public class HealthGoalController {
 
     @Autowired

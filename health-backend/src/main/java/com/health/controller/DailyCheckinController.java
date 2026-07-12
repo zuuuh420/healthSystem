@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
  * 每日打卡Controller
  */
 @RestController
-@RequestMapping("/api/checkin")
+@RequestMapping("/checkin")
 public class DailyCheckinController {
 
     @Autowired

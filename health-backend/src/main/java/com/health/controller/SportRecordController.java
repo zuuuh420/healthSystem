@@ -17,7 +17,7 @@ import java.util.List;
  * 运动记录Controller
  */
 @RestController
-@RequestMapping("/api/sport-records")
+@RequestMapping("/sport-records")
 public class SportRecordController {
 
     @Autowired
