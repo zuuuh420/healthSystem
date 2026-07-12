@@ -2,6 +2,7 @@ package com.health.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.health.common.Result;
+import com.health.common.SecurityUtil;
 import com.health.entity.SportType;
 import com.health.service.SportTypeService;
 import org.springframework.beans.factory.annotation.Autowired;

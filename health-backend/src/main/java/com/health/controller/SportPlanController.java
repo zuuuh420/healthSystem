@@ -2,6 +2,7 @@ package com.health.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.health.common.Result;
+import com.health.common.SecurityUtil;
 import com.health.dto.SportPlanDTO;
 import com.health.entity.SportPlan;
 import com.health.service.SportPlanService;
@@ -27,8 +28,7 @@ public class SportPlanController {
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) Integer status) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
         IPage<SportPlan> page = sportPlanService.getSportPlans(userId, pageNum, pageSize, status);
         return Result.success(page);
     }
@@ -38,8 +38,7 @@ public class SportPlanController {
      */
     @PostMapping
     public Result<SportPlan> addSportPlan(@RequestBody SportPlanDTO dto) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
 
         SportPlan plan = new SportPlan();
         BeanUtils.copyProperties(dto, plan);
@@ -57,8 +56,7 @@ public class SportPlanController {
      */
     @PutMapping("/{id}")
     public Result<Void> updateSportPlan(@PathVariable Long id, @RequestBody SportPlanDTO dto) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
 
         SportPlan plan = new SportPlan();
         BeanUtils.copyProperties(dto, plan);
@@ -76,8 +74,7 @@ public class SportPlanController {
      */
     @DeleteMapping("/{id}")
     public Result<Void> deleteSportPlan(@PathVariable Long id) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
         boolean success = sportPlanService.deleteSportPlan(id, userId);
         if (success) {
             return Result.success("删除成功", null);

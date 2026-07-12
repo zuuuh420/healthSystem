@@ -1,6 +1,7 @@
 package com.health.controller;
 
 import com.health.common.Result;
+import com.health.common.SecurityUtil;
 import com.health.service.DailyCheckinService;
 import com.health.vo.CheckinVO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +24,7 @@ public class DailyCheckinController {
     public Result<Void> checkin(
             @RequestParam(required = false) Long sportRecordId,
             @RequestParam(defaultValue = "sport") String checkinType) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
 
         boolean success = dailyCheckinService.checkin(userId, sportRecordId, checkinType);
         if (success) {
@@ -39,8 +39,7 @@ public class DailyCheckinController {
     @GetMapping("/today")
     public Result<CheckinVO> getTodayCheckinStatus(
             @RequestParam(defaultValue = "sport") String checkinType) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
         CheckinVO vo = dailyCheckinService.getTodayCheckinStatus(userId, checkinType);
         return Result.success(vo);
     }
@@ -51,8 +50,7 @@ public class DailyCheckinController {
     @GetMapping("/streak")
     public Result<CheckinVO> getCheckinStreak(
             @RequestParam(defaultValue = "sport") String checkinType) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
         CheckinVO vo = dailyCheckinService.getCheckinStreak(userId, checkinType);
         return Result.success(vo);
     }
@@ -64,8 +62,7 @@ public class DailyCheckinController {
     public Result<CheckinVO> getCheckinCalendar(
             @RequestParam String month,
             @RequestParam(defaultValue = "sport") String checkinType) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
 
         // 解析月份参数
         String[] parts = month.split("-");
