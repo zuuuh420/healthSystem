@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS health_record (
     user_id BIGINT NOT NULL COMMENT '用户ID',
     record_date DATE NOT NULL COMMENT '记录日期',
     weight DOUBLE COMMENT '体重(kg)',
+    height DOUBLE COMMENT '身高(cm)',
     bmi DOUBLE COMMENT 'BMI指数',
     systolic_pressure INT COMMENT '收缩压(mmHg)',
     diastolic_pressure INT COMMENT '舒张压(mmHg)',

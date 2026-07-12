@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
  * 运动计划Controller
  */
 @RestController
-@RequestMapping("/api/sport-plans")
+@RequestMapping("/sport-plans")
 public class SportPlanController {
 
     @Autowired

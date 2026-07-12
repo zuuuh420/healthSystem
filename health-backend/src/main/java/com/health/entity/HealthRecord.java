@@ -14,6 +14,7 @@ public class HealthRecord {
     private Long userId;
     private LocalDate recordDate;
     private Double weight;
+    private Double height;
     private Double bmi;
     private Integer systolicPressure;
     private Integer diastolicPressure;

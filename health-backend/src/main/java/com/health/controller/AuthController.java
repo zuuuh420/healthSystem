@@ -50,12 +50,12 @@ public class AuthController {
 
         String token = userService.login(username, password);
         if (token != null) {
+            User user = userService.findByUsername(username);
             Map<String, Object> data = new HashMap<>();
             data.put("token", token);
             data.put("tokenType", "Bearer");
 
             // 获取用户信息
-            User user = userService.findByUsername(username);
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("id", user.getId());
             userInfo.put("username", user.getUsername());

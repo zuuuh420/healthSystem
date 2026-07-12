@@ -97,7 +97,6 @@ public class SportStatsServiceImpl implements SportStatsService {
         }
 
         SportStatsVO stats = new SportStatsVO();
-        stats.setDays(days);
         stats.setDailyStats(trend);
 
         return stats;

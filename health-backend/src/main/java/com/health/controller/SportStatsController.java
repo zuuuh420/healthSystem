@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
  * 运动统计Controller
  */
 @RestController
-@RequestMapping("/api/sport-stats")
+@RequestMapping("/sport-stats")
 public class SportStatsController {
 
     @Autowired

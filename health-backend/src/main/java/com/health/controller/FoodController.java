@@ -45,12 +45,13 @@ public class FoodController {
 
     @PostMapping
     public Result<Food> create(@RequestBody Food food) {
-        Long userId = SecurityUtil.getCurrentUserId();
+        SecurityUtil.requireAdmin();
         return Result.success(foodService.create(food));
     }
 
     @PutMapping("/{id}")
     public Result<Food> update(@PathVariable Long id, @RequestBody Food food) {
+        SecurityUtil.requireAdmin();
         Food updated = foodService.update(id, food);
         if (updated == null) return Result.error("食物不存在");
         return Result.success(updated);
@@ -58,12 +59,14 @@ public class FoodController {
 
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
+        SecurityUtil.requireAdmin();
         foodService.delete(id);
         return Result.success("删除成功", null);
     }
 
     @PostMapping("/batch")
     public Result<Void> batchImport(@RequestBody List<Food> foods) {
+        SecurityUtil.requireAdmin();
         foodService.batchImport(foods);
         return Result.success("导入成功", null);
     }

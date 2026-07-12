@@ -14,12 +14,13 @@
 
     <el-table :data="tableData" border stripe v-loading="loading">
       <el-table-column prop="recordDate" label="日期" width="120" />
-      <el-table-column prop="weight" label="体重(kg)" width="110" />
+      <el-table-column prop="height" label="身高(cm)" width="100" />
+      <el-table-column prop="weight" label="体重(kg)" width="100" />
       <el-table-column prop="bmi" label="BMI" width="80" />
       <el-table-column label="血压(mmHg)" width="130">
         <template slot-scope="{ row }">{{ row.systolicPressure }}/{{ row.diastolicPressure }}</template>
       </el-table-column>
-      <el-table-column prop="bloodSugar" label="血糖(mmol/L)" width="120" />
+      <el-table-column prop="bloodSugar" label="血糖(mmol/L)" width="110" />
       <el-table-column prop="heartRate" label="心率(次/分)" width="110" />
       <el-table-column prop="note" label="备注" min-width="160" show-overflow-tooltip />
       <el-table-column label="操作" width="140" fixed="right">
@@ -35,20 +36,23 @@
         <el-form-item label="日期" prop="recordDate">
           <el-date-picker v-model="form.recordDate" type="date" value-format="yyyy-MM-dd" style="width: 100%" />
         </el-form-item>
+        <el-form-item label="身高(cm)">
+          <el-input-number v-model="form.height" :min="50" :max="250" :precision="1" style="width: 100%" placeholder="请输入身高" />
+        </el-form-item>
         <el-form-item label="体重(kg)">
           <el-input-number v-model="form.weight" :min="20" :max="300" :precision="1" style="width: 100%" />
         </el-form-item>
         <el-form-item label="收缩压(mmHg)">
-          <el-input-number v-model="form.systolicPressure" :min="50" :max="300" style="width: 100%" />
+          <el-input-number v-model="form.systolicPressure" :min="60" :max="260" style="width: 100%" placeholder="高压" />
         </el-form-item>
         <el-form-item label="舒张压(mmHg)">
-          <el-input-number v-model="form.diastolicPressure" :min="30" :max="200" style="width: 100%" />
+          <el-input-number v-model="form.diastolicPressure" :min="30" :max="160" style="width: 100%" placeholder="低压" />
         </el-form-item>
         <el-form-item label="血糖(mmol/L)">
           <el-input-number v-model="form.bloodSugar" :min="1" :max="30" :precision="1" style="width: 100%" />
         </el-form-item>
         <el-form-item label="心率(次/分)">
-          <el-input-number v-model="form.heartRate" :min="30" :max="250" style="width: 100%" />
+          <el-input-number v-model="form.heartRate" :min="30" :max="220" style="width: 100%" />
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.note" type="textarea" :rows="2" />
@@ -72,7 +76,7 @@ export default {
       loading: false, saving: false,
       tableData: [], dateRange: null,
       dialogVisible: false, editingId: null,
-      form: { recordDate: '', weight: null, systolicPressure: null, diastolicPressure: null, bloodSugar: null, heartRate: null, note: '' }
+      form: { recordDate: '', height: null, weight: null, systolicPressure: null, diastolicPressure: null, bloodSugar: null, heartRate: null, note: '' }
     }
   },
   created() { this.fetchData() },
@@ -94,12 +98,12 @@ export default {
     },
     showDialog(row) {
       this.editingId = row ? row.id : null
-      this.form = row ? { ...row } : { recordDate: new Date().toISOString().slice(0, 10), weight: null, systolicPressure: null, diastolicPressure: null, bloodSugar: null, heartRate: null, note: '' }
+      this.form = row ? { ...row } : { recordDate: new Date().toISOString().slice(0, 10), height: null, weight: null, systolicPressure: null, diastolicPressure: null, bloodSugar: null, heartRate: null, note: '' }
       this.dialogVisible = true
     },
     resetForm() {
       this.editingId = null
-      this.form = { recordDate: '', weight: null, systolicPressure: null, diastolicPressure: null, bloodSugar: null, heartRate: null, note: '' }
+      this.form = { recordDate: '', height: null, weight: null, systolicPressure: null, diastolicPressure: null, bloodSugar: null, heartRate: null, note: '' }
     },
     async handleSave() {
       this.saving = true
@@ -113,6 +117,8 @@ export default {
         }
         this.dialogVisible = false
         this.fetchData()
+      } catch (e) {
+        this.$message.error(e.response?.data?.msg || '操作失败')
       } finally { this.saving = false }
     },
     async handleDelete(id) {

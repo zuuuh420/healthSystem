@@ -73,9 +73,9 @@ export default {
       this.fetchData()
     },
     async handleResetPwd(id) {
-      await this.$confirm('确定重置该用户的密码为"123456"吗？', '确认重置', { type: 'warning' })
-      await resetUserPassword(id)
-      this.$message.success('密码已重置为123456')
+      await this.$confirm('确定重置该用户的密码吗？', '确认重置', { type: 'warning' })
+      const res = await resetUserPassword(id)
+      this.$message.success('密码已重置为：' + res.data)
     },
     async handleDelete(row) {
       await this.$confirm(`确定删除用户"${row.nickname}"吗？此操作不可恢复。`, '确认删除', { type: 'warning' })
