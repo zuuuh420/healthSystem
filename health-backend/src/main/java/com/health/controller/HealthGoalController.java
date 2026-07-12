@@ -2,6 +2,7 @@ package com.health.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.health.common.Result;
+import com.health.common.SecurityUtil;
 import com.health.dto.HealthGoalDTO;
 import com.health.entity.HealthGoal;
 import com.health.service.HealthGoalService;
@@ -28,8 +29,7 @@ public class HealthGoalController {
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false) String goalType) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
         IPage<HealthGoal> page = healthGoalService.getHealthGoals(userId, pageNum, pageSize, status, goalType);
         return Result.success(page);
     }
@@ -39,8 +39,7 @@ public class HealthGoalController {
      */
     @PostMapping
     public Result<HealthGoal> addHealthGoal(@RequestBody HealthGoalDTO dto) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
 
         HealthGoal goal = new HealthGoal();
         BeanUtils.copyProperties(dto, goal);
@@ -58,8 +57,7 @@ public class HealthGoalController {
      */
     @PutMapping("/{id}")
     public Result<Void> updateHealthGoal(@PathVariable Long id, @RequestBody HealthGoalDTO dto) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
 
         HealthGoal goal = new HealthGoal();
         BeanUtils.copyProperties(dto, goal);
@@ -77,8 +75,7 @@ public class HealthGoalController {
      */
     @DeleteMapping("/{id}")
     public Result<Void> deleteHealthGoal(@PathVariable Long id) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
         boolean success = healthGoalService.deleteHealthGoal(id, userId);
         if (success) {
             return Result.success("删除成功", null);
@@ -91,8 +88,7 @@ public class HealthGoalController {
      */
     @PutMapping("/{id}/progress")
     public Result<Void> updateGoalProgress(@PathVariable Long id, @RequestParam Double currentValue) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
         boolean success = healthGoalService.updateGoalProgress(id, userId, currentValue);
         if (success) {
             return Result.success("进度更新成功", null);

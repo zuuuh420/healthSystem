@@ -1,6 +1,7 @@
 package com.health.controller;
 
 import com.health.common.Result;
+import com.health.common.SecurityUtil;
 import com.health.service.SportStatsService;
 import com.health.vo.SportStatsVO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +22,7 @@ public class SportStatsController {
      */
     @GetMapping("/weekly")
     public Result<SportStatsVO> getWeeklyStats() {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
         SportStatsVO stats = sportStatsService.getWeeklyStats(userId);
         return Result.success(stats);
     }
@@ -32,8 +32,7 @@ public class SportStatsController {
      */
     @GetMapping("/monthly")
     public Result<SportStatsVO> getMonthlyStats() {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
         SportStatsVO stats = sportStatsService.getMonthlyStats(userId);
         return Result.success(stats);
     }
@@ -43,8 +42,7 @@ public class SportStatsController {
      */
     @GetMapping("/trend")
     public Result<SportStatsVO> getSportTrend(@RequestParam(defaultValue = "30") Integer days) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
         SportStatsVO stats = sportStatsService.getSportTrend(userId, days);
         return Result.success(stats);
     }

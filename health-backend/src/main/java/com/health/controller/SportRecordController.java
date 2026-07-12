@@ -2,6 +2,7 @@ package com.health.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.health.common.Result;
+import com.health.common.SecurityUtil;
 import com.health.dto.SportRecordDTO;
 import com.health.entity.SportRecord;
 import com.health.service.SportRecordService;
@@ -32,8 +33,7 @@ public class SportRecordController {
             @RequestParam(required = false) LocalDate startDate,
             @RequestParam(required = false) LocalDate endDate,
             @RequestParam(required = false) Long sportTypeId) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
         IPage<SportRecord> page = sportRecordService.getSportRecords(userId, pageNum, pageSize, startDate, endDate, sportTypeId);
         return Result.success(page);
     }
@@ -43,8 +43,7 @@ public class SportRecordController {
      */
     @GetMapping("/{id}")
     public Result<SportRecord> getSportRecordById(@PathVariable Long id) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
         SportRecord record = sportRecordService.getSportRecordById(id, userId);
         if (record == null) {
             return Result.error("运动记录不存在");
@@ -57,8 +56,7 @@ public class SportRecordController {
      */
     @PostMapping
     public Result<SportRecord> addSportRecord(@RequestBody SportRecordDTO dto) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
 
         SportRecord record = new SportRecord();
         BeanUtils.copyProperties(dto, record);
@@ -76,8 +74,7 @@ public class SportRecordController {
      */
     @PutMapping("/{id}")
     public Result<Void> updateSportRecord(@PathVariable Long id, @RequestBody SportRecordDTO dto) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
 
         SportRecord record = new SportRecord();
         BeanUtils.copyProperties(dto, record);
@@ -95,8 +92,7 @@ public class SportRecordController {
      */
     @DeleteMapping("/{id}")
     public Result<Void> deleteSportRecord(@PathVariable Long id) {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
         boolean success = sportRecordService.deleteSportRecord(id, userId);
         if (success) {
             return Result.success("删除成功", null);
@@ -109,8 +105,7 @@ public class SportRecordController {
      */
     @GetMapping("/today")
     public Result<List<SportRecord>> getTodayRecords() {
-        // TODO: 从JWT中获取用户ID
-        Long userId = 1L; // 临时硬编码
+        Long userId = SecurityUtil.getCurrentUserId();
         List<SportRecord> records = sportRecordService.getTodayRecords(userId);
         return Result.success(records);
     }
