@@ -23,10 +23,11 @@ public class JwtUtil {
     /**
      * 生成JWT Token
      */
-    public String generateToken(Long userId, String username) {
+    public String generateToken(Long userId, String username, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("username", username);
+        claims.put("role", role);
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -73,6 +74,12 @@ public class JwtUtil {
                 .setSigningKey(secret)
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    public String getRoleFromToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        Object role = claims.get("role");
+        return role != null ? role.toString() : "user";
     }
 
     /**

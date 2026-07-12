@@ -7,7 +7,7 @@ import com.health.entity.User;
 public interface AdminService {
     AdminStatsDTO getStats();
     IPage<User> listUsers(String keyword, int page, int size);
-    User updateUserRole(Long userId, String role);
-    void deleteUser(Long userId);
-    void resetPassword(Long userId);
+    void updateUserRole(Long userId, String role, Long operatorId);
+    void deleteUser(Long userId, Long operatorId);
+    String resetPassword(Long userId);
 }
