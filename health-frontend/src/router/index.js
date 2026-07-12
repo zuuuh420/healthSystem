@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import sportGoalRoutes from './sport-goal'
+import dietAdminRoutes from './diet-admin'
 
 Vue.use(VueRouter)
 
@@ -39,7 +40,8 @@ const commonRoutes = [
 // 合并所有路由
 const routes = [
   ...commonRoutes,
-  ...sportGoalRoutes
+  ...sportGoalRoutes,
+  ...dietAdminRoutes
 ]
 
 const router = new VueRouter({
@@ -57,11 +59,17 @@ router.beforeEach((to, from, next) => {
   const isPublicPage = publicPages.includes(to.path)
 
   if (!token && !isPublicPage) {
-    // 未登录且访问受保护页面，跳转到登录页
     next('/login')
   } else if (token && isPublicPage) {
-    // 已登录且访问登录/注册页，跳转到首页
     next('/dashboard')
+  } else if (to.meta && to.meta.requireAdmin) {
+    // 管理员权限检查
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+    if (userInfo.role !== 'admin') {
+      next('/dashboard')
+    } else {
+      next()
+    }
   } else {
     next()
   }
