@@ -66,7 +66,14 @@
       </el-table>
 
       <!-- 空数据提示 -->
-      <el-empty v-if="!loading && records.length === 0" description="暂无运动记录" />
+      <empty-state
+        v-if="!loading && records.length === 0"
+        icon="el-icon-basketball"
+        text="暂无运动记录，快去运动吧！"
+        show-action
+        action-text="新增记录"
+        @action="handleAdd"
+      />
 
       <!-- 分页 -->
       <el-pagination
@@ -86,9 +93,11 @@
 
 <script>
 import { getSportRecords, deleteSportRecord, getSportTypes } from '@/api/sport'
+import EmptyState from '@/components/EmptyState.vue'
 
 export default {
   name: 'SportRecordList',
+  components: { EmptyState },
   data() {
     return {
       loading: false,
