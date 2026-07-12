@@ -44,6 +44,24 @@ healthSystem/
 3. 数据库变更必须在 database/migrations 中增加 SQL 文件
 4. 接口变更必须同步更新接口文档
 
+## 本地启动
+
+项目默认使用 MySQL 数据库 `health_system`。先依次执行 `database/migrations` 中的脚本，再启动服务：
+
+```bash
+# 后端，默认端口 8082
+cd health-backend
+$env:DB_PASSWORD="你的MySQL密码"
+mvn spring-boot:run
+
+# 前端，默认端口 3102
+cd health-frontend
+npm install
+npm run serve
+```
+
+访问地址：`http://localhost:3102`。前端已将 `/api` 代理到 `http://localhost:8082`。
+
 ## 小组成员
 
 | 成员 | 角色 | 主要职责 |
