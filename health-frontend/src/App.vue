@@ -122,7 +122,7 @@ export default {
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@500;600&display=swap");
 * {
   box-sizing: border-box;
   margin: 0;
@@ -287,31 +287,70 @@ body,
   border-right: 0;
 }
 .sidebar:after {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 180px;
-  opacity: .16;
+  height: 260px;
+  opacity: 0.18;
   pointer-events: none;
-  background: url('./assets/health-hero-base.webp') center bottom / cover no-repeat;
-  mix-blend-mode: screen;
+  background: url("./assets/vine-transparent.webp") center bottom / 150% auto
+    no-repeat;
 }
-.brand { color: #f4f2eb; }
-.brand-mark { background: #e07035; color: #fff; }
-.brand small { color: #a5bdb1; }
-.sidebar-menu { position: relative; z-index: 1; background: transparent; }
+.brand {
+  color: #f4f2eb;
+}
+.brand-mark {
+  background: #e07035;
+  color: #fff;
+}
+.brand small {
+  color: #a5bdb1;
+}
+.sidebar-menu {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
 .sidebar .el-menu-item,
-.sidebar .el-submenu__title { color: #aec2b8; }
+.sidebar .el-submenu__title {
+  color: #aec2b8;
+}
 .sidebar .el-menu-item:hover,
-.sidebar .el-submenu__title:hover { background: rgba(255,255,255,.08); color: #fff; }
-.sidebar .el-menu-item.is-active { background: #e07035; color: #fff; }
-.sidebar .el-submenu .el-menu { background: rgba(0,0,0,.13); }
-.collapse-button { z-index: 2; border-top-color: rgba(255,255,255,.12); background: transparent; color: #aec2b8; }
-.header { background: #f8f6f0; border-bottom-color: #e1ded4; }
-.date-label { color: #9a968b; }
-.avatar { background: #dcebe2; color: #176044; }
-.main-content { background: #eeece5; }
-.el-card { background: #faf9f5 !important; }
+.sidebar .el-submenu__title:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.sidebar .el-menu-item.is-active {
+  background: rgba(168, 198, 108, 0.13);
+  color: #eef5e5;
+  box-shadow: inset 3px 0 #ea6d2d;
+}
+.sidebar .el-submenu .el-menu {
+  background: rgba(0, 0, 0, 0.13);
+}
+.collapse-button {
+  z-index: 2;
+  border-top-color: rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: #aec2b8;
+}
+.header {
+  background: #f8f6f0;
+  border-bottom-color: #e1ded4;
+}
+.date-label {
+  color: #9a968b;
+}
+.avatar {
+  background: #dcebe2;
+  color: #176044;
+}
+.main-content {
+  background: #eeece5;
+}
+.el-card {
+  background: #faf9f5 !important;
+}
 </style>

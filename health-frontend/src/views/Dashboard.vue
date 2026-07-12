@@ -8,14 +8,12 @@
       </div>
       <div class="quick-actions">
         <el-button
+          type="primary"
           icon="el-icon-plus"
           @click="$router.push('/sport/records/add')"
           >记录运动</el-button
-        ><el-button
-          type="primary"
-          icon="el-icon-aim"
-          @click="$router.push('/goal/list')"
-          >查看目标</el-button
+        ><el-button icon="el-icon-check" @click="$router.push('/goal/checkin')"
+          >今日打卡</el-button
         >
       </div>
     </header>
@@ -37,8 +35,8 @@
         </button>
       </article>
 
-      <div class="metric-grid">
-        <article class="metric-card">
+      <div class="metric-strip">
+        <article class="strip-metric">
           <span>本周运动</span
           ><strong>{{ overview.weeklyMinutes }}<small> 分钟</small></strong
           ><em
@@ -47,19 +45,19 @@
             }}% 周目标</em
           >
         </article>
-        <article class="metric-card">
+        <article class="strip-metric">
           <span>能量消耗</span
           ><strong
             >{{ Math.round(overview.weeklyCalories)
             }}<small> kcal</small></strong
           ><em>来自运动记录</em>
         </article>
-        <article class="metric-card">
+        <article class="strip-metric">
           <span>连续打卡</span
           ><strong>{{ overview.currentStreak }}<small> 天</small></strong
           ><em>保持稳定节奏</em>
         </article>
-        <article class="metric-card">
+        <article class="strip-metric">
           <span>进行中目标</span
           ><strong>{{ overview.activeGoals }}<small> 项</small></strong
           ><em>{{ overview.completedGoals }}项已完成</em>
@@ -74,7 +72,18 @@
           </div>
           <span>分钟</span>
         </div>
-        <div ref="trendChart" class="chart" />
+        <div v-if="hasTrend" ref="trendChart" class="chart" />
+        <div v-else class="chart-empty">
+          <span class="seed-icon"><i class="el-icon-sunny" /></span>
+          <strong>本周的生长还未开始</strong>
+          <p>记录一次10分钟散步，让第一条健康轨迹出现。</p>
+          <el-button
+            type="primary"
+            plain
+            @click="$router.push('/sport/records/add')"
+            >记录第一次运动</el-button
+          >
+        </div>
       </article>
       <article class="next-panel">
         <div class="panel-heading">
@@ -111,6 +120,10 @@ export default {
   name: "Dashboard",
   data: () => ({ loading: false, overview: null, chart: null }),
   computed: {
+    hasTrend() {
+      const trend = (this.overview && this.overview.trend) || [];
+      return trend.some((item) => Number(item.minutes) > 0);
+    },
     displayName() {
       const user = this.$store.state.userInfo || {};
       return user.nickname || user.username || "朋友";
@@ -410,19 +423,250 @@ export default {
     font-size: 24px;
   }
 }
-.dashboard { color: #25332c; }
-.welcome-row { padding-bottom: 8px; }
-.welcome-row h1 { font-family: "Noto Serif SC", "Microsoft YaHei", serif; font-weight: 600; letter-spacing: 0; }
-.welcome-row p { color: #858278; }
-.quick-actions .el-button { border-radius: 0; border-color: #d5d1c5; background: #faf9f5; }
-.quick-actions .el-button--primary { border-color: #e07035; background: #e07035; }
-.score-card { position: relative; overflow: hidden; background: #112f26; border-radius: 0; min-height: 250px; }
-.score-card:after { content: ''; position: absolute; right: -10%; bottom: -34%; width: 70%; height: 90%; opacity: .32; background: url('../assets/health-hero-reveal.webp') center / cover no-repeat; transform: rotate(-7deg); pointer-events: none; }
-.score-card > * { position: relative; z-index: 1; }
-.metric-card { border-radius: 0; background: #faf9f5; border-color: #ddd9cf; }
-.metric-card strong { font-family: "Noto Serif SC", "Microsoft YaHei", serif; font-weight: 600; }
-.trend-panel, .next-panel { border-radius: 0; background: #faf9f5; border-color: #ddd9cf; }
-.panel-heading h2 { font-family: "Noto Serif SC", "Microsoft YaHei", serif; font-weight: 600; }
-.action-item span { background: #e07035; color: #fff; border-radius: 0; }
-.next-panel .el-button { border-radius: 0; border-color: #cfcabe; color: #365244; }
+.dashboard {
+  color: #25332c;
+}
+.welcome-row {
+  padding-bottom: 8px;
+}
+.welcome-row h1 {
+  font-family: "Noto Serif SC", "Microsoft YaHei", serif;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.welcome-row p {
+  color: #858278;
+}
+.quick-actions .el-button {
+  border-radius: 0;
+  border-color: #d5d1c5;
+  background: #faf9f5;
+}
+.quick-actions .el-button--primary {
+  border-color: #e07035;
+  background: #e07035;
+}
+.score-card {
+  position: relative;
+  overflow: hidden;
+  background: #112f26;
+  border-radius: 0;
+  min-height: 250px;
+}
+.score-card:after {
+  content: "";
+  position: absolute;
+  right: -10%;
+  bottom: -34%;
+  width: 70%;
+  height: 90%;
+  opacity: 0.32;
+  background: url("../assets/health-hero-reveal.webp") center / cover no-repeat;
+  transform: rotate(-7deg);
+  pointer-events: none;
+}
+.score-card > * {
+  position: relative;
+  z-index: 1;
+}
+.metric-card {
+  border-radius: 0;
+  background: #faf9f5;
+  border-color: #ddd9cf;
+}
+.metric-card strong {
+  font-family: "Noto Serif SC", "Microsoft YaHei", serif;
+  font-weight: 600;
+}
+.trend-panel,
+.next-panel {
+  border-radius: 0;
+  background: #faf9f5;
+  border-color: #ddd9cf;
+}
+.panel-heading h2 {
+  font-family: "Noto Serif SC", "Microsoft YaHei", serif;
+  font-weight: 600;
+}
+.action-item span {
+  background: #e07035;
+  color: #fff;
+  border-radius: 0;
+}
+.next-panel .el-button {
+  border-radius: 0;
+  border-color: #cfcabe;
+  color: #365244;
+}
+.welcome-row {
+  position: relative;
+  overflow: hidden;
+  min-height: 104px;
+  padding: 16px 210px 20px 6px;
+}
+.welcome-row:after {
+  content: "";
+  position: absolute;
+  top: -26px;
+  right: 0;
+  width: 250px;
+  height: 150px;
+  opacity: 0.1;
+  background: url("../assets/vine-transparent.webp") center top / contain
+    no-repeat;
+  pointer-events: none;
+}
+.quick-actions {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+}
+.dashboard-grid {
+  grid-template-columns: 1.55fr 1fr;
+  gap: 18px;
+}
+.score-card {
+  grid-column: 1 / -1;
+  min-height: 280px;
+  padding: 32px;
+  border-radius: 18px;
+}
+.score-card:after {
+  right: -4%;
+  bottom: -18%;
+  width: 78%;
+  height: 92%;
+  opacity: 0.2;
+  background-image: url("../assets/vine-transparent.webp");
+  background-size: contain;
+  background-position: right bottom;
+  transform: none;
+}
+.score-body strong {
+  font-family: "Noto Serif SC", serif;
+  font-size: 76px;
+  color: #f5f0e6;
+}
+.score-status {
+  display: inline-flex;
+  align-items: center;
+  float: none;
+  margin: 14px 0 0 20px;
+  vertical-align: top;
+}
+.metric-strip {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: #fcfbf7;
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(41, 58, 49, 0.06);
+  overflow: hidden;
+}
+.strip-metric {
+  position: relative;
+  min-width: 0;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+}
+.strip-metric + .strip-metric:before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 22px;
+  bottom: 22px;
+  width: 1px;
+  background: #e7e2d7;
+}
+.strip-metric span {
+  color: #7f847c;
+  font-size: 12px;
+}
+.strip-metric strong {
+  margin: 10px 0 7px;
+  font-family: "Noto Serif SC", serif;
+  font-size: 27px;
+  color: #172b24;
+}
+.strip-metric small {
+  font-family: Inter, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+}
+.strip-metric em {
+  color: #557a46;
+  font-size: 11px;
+  font-style: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.trend-panel,
+.next-panel {
+  border: 0;
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(41, 58, 49, 0.055);
+}
+.chart-empty {
+  height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #738078;
+}
+.chart-empty .seed-icon {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background: #edf2df;
+  color: #557a46;
+  font-size: 22px;
+}
+.chart-empty strong {
+  font-family: "Noto Serif SC", serif;
+  color: #24382f;
+  font-size: 18px;
+}
+.chart-empty p {
+  margin: 8px 0 18px;
+  font-size: 12px;
+}
+.chart-empty .el-button {
+  border-radius: 22px;
+  color: #557a46;
+  border-color: #a8c66c;
+  background: #f5f7ed;
+}
+@media (max-width: 980px) {
+  .metric-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+  .strip-metric:nth-child(3):before {
+    display: none;
+  }
+}
+@media (max-width: 720px) {
+  .welcome-row {
+    padding-right: 6px;
+  }
+  .welcome-row:after {
+    display: none;
+  }
+  .metric-strip {
+    grid-template-columns: 1fr;
+  }
+  .strip-metric + .strip-metric:before {
+    top: 0;
+    bottom: auto;
+    right: 22px;
+    width: auto;
+    height: 1px;
+  }
+}
 </style>
