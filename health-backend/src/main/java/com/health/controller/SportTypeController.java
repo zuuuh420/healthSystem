@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
  * 运动类型Controller
  */
 @RestController
-@RequestMapping("/api/sport-types")
+@RequestMapping("/sport-types")
 public class SportTypeController {
 
     @Autowired
