@@ -8,6 +8,7 @@ import com.health.dto.DietRecordDTO;
 import com.health.entity.DietRecord;
 import com.health.service.DietRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -45,7 +46,7 @@ public class DietRecordController {
 
     @GetMapping
     public Result<IPage<DietRecord>> list(
-            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
         Long userId = SecurityUtil.getCurrentUserId();
@@ -54,8 +55,8 @@ public class DietRecordController {
 
     @GetMapping("/range")
     public Result<List<DietRecord>> listByRange(
-            @RequestParam LocalDate start,
-            @RequestParam LocalDate end) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
         Long userId = SecurityUtil.getCurrentUserId();
         return Result.success(dietRecordService.listByRange(userId, start, end));
     }

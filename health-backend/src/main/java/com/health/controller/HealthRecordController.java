@@ -5,6 +5,7 @@ import com.health.common.SecurityUtil;
 import com.health.entity.HealthRecord;
 import com.health.service.HealthRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -50,7 +51,9 @@ public class HealthRecordController {
     }
 
     @GetMapping("/range")
-    public Result<List<HealthRecord>> listByRange(@RequestParam LocalDate start, @RequestParam LocalDate end) {
+    public Result<List<HealthRecord>> listByRange(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
         Long userId = SecurityUtil.getCurrentUserId();
         return Result.success(healthRecordService.listByDateRange(userId, start, end));
     }
