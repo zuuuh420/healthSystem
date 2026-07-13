@@ -32,11 +32,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
                 Long userId = jwtUtil.getUserIdFromToken(token);
                 String username = jwtUtil.getUsernameFromToken(token);
+                String role = jwtUtil.getRoleFromToken(token);
 
-                // 创建认证对象
+                // 创建认证对象，将角色存入details
                 UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userId, null, new ArrayList<>());
-                authentication.setDetails(username);
+                authentication.setDetails(username + ":" + role);
 
                 // 设置认证信息到上下文
                 SecurityContextHolder.getContext().setAuthentication(authentication);
