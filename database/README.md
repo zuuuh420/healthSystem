@@ -16,6 +16,9 @@ mysql -u root -p health_system < migrations/V001_user.sql
 
 # 运动与目标表
 mysql -u root -p health_system < migrations/V005_sport_goal.sql
+
+# 饮食、健康数据与管理端表
+mysql -u root -p health_system < migrations/V006_diet_admin.sql
 ```
 
 ## 3. 导入测试数据
