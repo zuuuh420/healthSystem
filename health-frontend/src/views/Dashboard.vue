@@ -4,780 +4,90 @@
       <div>
         <span class="date-note">{{ fullDate }}</span>
         <h1>{{ greeting }}，{{ displayName }}</h1>
-        <p>把今天的小记录，变成长期可见的改变。</p>
+        <p>手环正在把今天的身体信号，整理成可以行动的建议。</p>
       </div>
       <div class="welcome-actions">
-        <el-button
-          class="checkin-button"
-          icon="el-icon-check"
-          @click="$router.push('/goal/checkin')"
-          >今日打卡</el-button
-        >
-        <el-button
-          class="record-button"
-          icon="el-icon-plus"
-          @click="$router.push('/sport/records/add')"
-          >记录运动</el-button
-        >
+        <el-select v-model="activeProfileId" size="small" class="profile-switch" popper-class="profile-popper">
+          <el-option v-for="profile in profiles" :key="profile.id" :label="`${profile.name} · ${profile.worn ? '已佩戴' : '未佩戴'}`" :value="profile.id" />
+        </el-select>
+        <el-button class="sync-button" icon="el-icon-refresh" :loading="syncing" @click="syncDevice">同步设备</el-button>
       </div>
     </header>
 
-    <section v-if="overview" class="rhythm-panel">
-      <div class="rhythm-copy">
-        <span class="section-label">本周节奏</span>
-        <div class="score-line">
-          <strong>{{ scoreText }}</strong
-          ><small>综合健康分</small>
-        </div>
-        <span class="growth-state" :class="stateClass">{{ growthState }}</span>
-        <h2>{{ focusTitle }}</h2>
-        <p>{{ focusDescription }}</p>
-        <button class="text-action" type="button" @click="handlePrimaryAction">
-          {{ primaryAction }} <i class="el-icon-right" />
-        </button>
+    <section class="device-hero" :class="{ 'is-off': !device.worn }">
+      <div class="device-copy">
+        <div class="eyebrow-row"><span class="eyebrow">CONNECTED DEVICE</span><span class="connection-pill"><i :class="device.worn ? 'el-icon-success' : 'el-icon-warning-outline'" />{{ device.worn ? '佩戴中' : '暂未佩戴' }}</span></div>
+        <h2>{{ device.device }}</h2>
+        <p v-if="device.worn">正在采集心率、血氧、睡眠、体温和运动状态。最新数据已同步到今天的健康轨迹。</p>
+        <p v-else>手环暂时没有检测到佩戴状态。重新戴上手环后，数据会自动回到这条健康轨迹里。</p>
+        <div class="device-meta"><span><i class="el-icon-time" />{{ device.lastSync }}</span><span><i class="el-icon-battery" />电量 {{ device.battery }}%</span><button type="button" @click="showDeviceInfo">设备详情 <i class="el-icon-right" /></button></div>
       </div>
-
-      <div class="rhythm-data">
-        <div class="growth-track" aria-label="本周健康进度">
-          <div class="track-line">
-            <span :style="{ width: progressRate + '%' }" />
-          </div>
-          <div class="track-labels">
-            <span>萌芽</span><span>抽芽</span><span>舒展</span>
-          </div>
-        </div>
-        <div class="metric-band">
-          <div>
-            <span>运动</span><strong>{{ overview.weeklyMinutes }}</strong
-            ><small>分钟</small>
-          </div>
-          <div>
-            <span>能量</span
-            ><strong>{{ Math.round(overview.weeklyCalories) }}</strong
-            ><small>kcal</small>
-          </div>
-          <div>
-            <span>打卡</span><strong>{{ overview.currentStreak }}</strong
-            ><small>天</small>
-          </div>
-          <div>
-            <span>目标</span><strong>{{ overview.activeGoals }}</strong
-            ><small>项</small>
-          </div>
-        </div>
-      </div>
-      <img class="panel-vine" src="@/assets/vine-transparent.webp" alt="" />
+      <div class="device-visual"><div class="visual-glow" /><img src="@/assets/wristband-product.png" alt="知衡健康智能手环" /></div>
     </section>
 
-    <div v-if="overview" class="content-grid">
-      <section class="trend-section">
-        <header class="section-heading">
-          <div>
-            <span class="section-label">近7天变化</span>
-            <h2>运动趋势</h2>
-          </div>
-          <router-link to="/sport/stats"
-            >查看统计 <i class="el-icon-right"
-          /></router-link>
-        </header>
-        <div class="chart-wrap">
-          <div ref="trendChart" class="trend-chart" />
-          <div v-if="!hasTrend" class="trend-empty">
-            <strong>这一周还没有留下轨迹</strong>
-            <p>先完成一次10分钟轻量活动，曲线会从这里开始生长。</p>
-          </div>
-        </div>
-      </section>
+    <section class="signal-section">
+      <header class="section-heading"><div><span class="eyebrow">LIVE SIGNALS</span><h2>今日身体信号</h2></div><span class="section-hint">{{ device.worn ? '来自手环的自动采集' : '佩戴后自动出现' }}</span></header>
+      <div class="signal-grid">
+        <article v-for="signal in signals" :key="signal.key" class="signal-card" :class="{ muted: !device.worn }">
+          <div class="signal-top"><span class="signal-icon" :class="signal.tone"><i :class="signal.icon" /></span><span>{{ signal.label }}</span></div>
+          <strong>{{ signal.value }}</strong><small>{{ signal.unit }}</small><div v-if="device.worn" class="signal-spark" :class="signal.tone"><i /><i /><i /><i /><i /></div>
+        </article>
+      </div>
+    </section>
 
-      <section class="action-section">
-        <header class="section-heading">
-          <div>
-            <span class="section-label">今天可以做</span>
-            <h2>建议行动</h2>
-          </div>
-        </header>
-        <div class="action-timeline">
-          <div
-            v-for="(action, index) in actions"
-            :key="action.title"
-            class="timeline-item"
-          >
-            <span class="timeline-node">{{ index + 1 }}</span>
-            <div>
-              <strong>{{ action.title }}</strong>
-              <p>{{ action.description }}</p>
-            </div>
-          </div>
-        </div>
-        <router-link class="analysis-link" to="/analysis"
-          >查看完整健康分析 <i class="el-icon-right"
-        /></router-link>
-      </section>
+    <div class="dashboard-grid">
+      <section class="activity-section"><header class="section-heading"><div><span class="eyebrow">AUTO DETECTED</span><h2>自动活动轨迹</h2></div><router-link to="/sport/records">全部活动 <i class="el-icon-right" /></router-link></header><div v-if="device.worn && device.activities.length" class="activity-list"><div v-for="activity in device.activities" :key="activity.time + activity.title" class="activity-row"><time>{{ activity.time }}</time><span class="activity-icon"><i :class="activity.icon" /></span><div><strong>{{ activity.title }}</strong><p>{{ activity.detail }}</p></div><i class="el-icon-check activity-check" /></div></div><div v-else class="empty-strip"><i class="el-icon-watch-1" /><div><strong>等待手环产生轨迹</strong><p>佩戴后会自动识别步行、跑步、骑行与久坐状态。</p></div></div></section>
 
-      <section class="records-section">
-        <header class="section-heading">
-          <div>
-            <span class="section-label">真实积累</span>
-            <h2>最近记录</h2>
-          </div>
-          <router-link to="/sport/records"
-            >全部记录 <i class="el-icon-right"
-          /></router-link>
-        </header>
-        <div v-if="recentRecords.length" class="record-list">
-          <div
-            v-for="record in recentRecords"
-            :key="record.id"
-            class="record-row"
-          >
-            <span class="record-date">{{
-              formatRecordDate(record.sportDate)
-            }}</span>
-            <span class="record-icon"><i class="el-icon-basketball" /></span>
-            <div>
-              <strong>{{ record.sportTypeName || "运动记录" }}</strong
-              ><small
-                >{{ record.durationMinutes }}分钟 ·
-                {{ Math.round(record.caloriesBurned || 0) }} kcal</small
-              >
-            </div>
-            <em>+{{ Math.max(1, Math.round(record.durationMinutes / 2)) }}</em>
-          </div>
-        </div>
-        <div v-else class="records-empty">
-          <span><i class="el-icon-sunrise" /></span>
-          <div>
-            <strong>最近还没有运动记录</strong>
-            <p>不必追求强度，先留下第一条真实轨迹。</p>
-          </div>
-        </div>
-      </section>
+      <section class="recovery-section"><header class="section-heading"><div><span class="eyebrow">RECOVERY</span><h2>恢复状态</h2></div><router-link to="/report">看周报 <i class="el-icon-right" /></router-link></header><div class="recovery-score"><strong>{{ device.worn ? recoveryScore : '--' }}</strong><span>{{ device.worn ? '恢复指数' : '等待数据' }}</span></div><p>{{ recoveryText }}</p><div class="recovery-bar"><i :style="{ width: device.worn ? recoveryScore + '%' : '8%' }" /></div><div class="recovery-tags"><span><i class="el-icon-moon" />睡眠 {{ device.metrics.sleep }}</span><span><i class="el-icon-data-analysis" />压力 {{ device.metrics.pressure }}</span></div></section>
 
-      <section class="goal-section">
-        <span class="section-label">本周目标</span>
-        <h2>{{ overview.weeklyMinutes }} / 150 分钟</h2>
-        <div class="goal-progress">
-          <span :style="{ width: progressRate + '%' }" />
-        </div>
-        <p>{{ remainingText }}</p>
-        <router-link to="/goal/list"
-          >管理目标 <i class="el-icon-right"
-        /></router-link>
-      </section>
+      <section class="nutrition-section"><header class="section-heading"><div><span class="eyebrow">DAILY FUEL</span><h2>今日补给建议</h2></div><router-link to="/diet">记录饮食 <i class="el-icon-right" /></router-link></header><div class="nutrition-main"><span class="nutrition-orb"><i class="el-icon-food" /></span><div><strong>{{ nutritionTitle }}</strong><p>{{ nutritionAdvice }}</p></div></div><div class="nutrition-foot"><span>依据 {{ device.worn ? '步数、睡眠与心率' : '最近一次记录' }}</span><button type="button" @click="$router.push('/diet')">查看详情 <i class="el-icon-right" /></button></div></section>
+
+      <section class="weekly-section"><header class="section-heading"><div><span class="eyebrow">WEEKLY RHYTHM</span><h2>本周节奏</h2></div><router-link to="/analysis">完整分析 <i class="el-icon-right" /></router-link></header><div class="weekly-stats"><div><strong>{{ overview ? overview.weeklyMinutes : 0 }}</strong><span>运动分钟</span></div><div><strong>{{ device.metrics.steps || '--' }}</strong><span>今日步数</span></div><div><strong>{{ overview ? overview.currentStreak : 0 }}</strong><span>连续打卡</span></div></div><div class="weekly-progress"><i :style="{ width: progressRate + '%' }" /></div><p>{{ weeklyText }}</p></section>
     </div>
   </section>
 </template>
 
 <script>
-import * as echarts from "echarts";
-import { getDashboardOverview } from "@/api/dashboard";
-import { getSportRecords } from "@/api/sport";
+import { getDashboardOverview } from '@/api/dashboard'
+import { getSportRecords } from '@/api/sport'
+import { wearableProfiles, findWearableProfile } from '@/mock/wearable'
 
 export default {
-  name: "Dashboard",
-  data: () => ({
-    loading: false,
-    overview: null,
-    recentRecords: [],
-    chart: null,
-  }),
+  name: 'Dashboard',
+  data: () => ({ loading: false, syncing: false, overview: null, recentRecords: [], profiles: wearableProfiles, activeProfileId: 'demo2026' }),
   computed: {
-    displayName() {
-      const user = this.$store.state.userInfo || {};
-      return user.nickname || user.username || "朋友";
+    activeUser() { return this.$store.state.userInfo || {} },
+    displayName() { return this.device.name || this.activeUser.nickname || this.activeUser.username || '朋友' },
+    device() { return findWearableProfile(this.activeProfileId) },
+    greeting() { const hour = new Date().getHours(); return hour < 11 ? '早上好' : hour < 18 ? '下午好' : '晚上好' },
+    fullDate() { return new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(new Date()) },
+    signals() {
+      const m = this.device.metrics
+      return [
+        { key: 'heart', label: '心率', value: m.heartRate || '--', unit: m.heartRate ? 'bpm' : '未检测', icon: 'el-icon-heart', tone: 'rose' },
+        { key: 'oxygen', label: '血氧饱和度', value: m.oxygen ? `${m.oxygen}%` : '--', unit: m.oxygen ? 'SpO₂' : '未检测', icon: 'el-icon-odometer', tone: 'mint' },
+        { key: 'temp', label: '体温趋势', value: m.temperature || '--', unit: m.temperature ? '°C' : '未检测', icon: 'el-icon-sunny', tone: 'amber' },
+        { key: 'sleep', label: '睡眠时长', value: m.sleep, unit: m.sleep !== '--' ? '昨夜' : '未检测', icon: 'el-icon-moon', tone: 'lilac' },
+        { key: 'pressure', label: '血压趋势', value: m.pressure, unit: m.pressure !== '--' ? 'mmHg' : '未检测', icon: 'el-icon-data-analysis', tone: 'blue' },
+        { key: 'bodyFat', label: '体脂率', value: m.bodyFat ? `${m.bodyFat}%` : '--', unit: m.bodyFat ? 'BF' : '未检测', icon: 'el-icon-user', tone: 'leaf' }
+      ]
     },
-    greeting() {
-      const hour = new Date().getHours();
-      return hour < 11 ? "早上好" : hour < 18 ? "下午好" : "晚上好";
-    },
-    fullDate() {
-      return new Intl.DateTimeFormat("zh-CN", {
-        month: "long",
-        day: "numeric",
-        weekday: "long",
-      }).format(new Date());
-    },
-    hasTrend() {
-      return ((this.overview && this.overview.trend) || []).some(
-        (item) => Number(item.minutes) > 0,
-      );
-    },
-    progressRate() {
-      return Math.min(
-        100,
-        Math.round(
-          (((this.overview && this.overview.weeklyMinutes) || 0) / 150) * 100,
-        ),
-      );
-    },
-    scoreText() {
-      return String((this.overview && this.overview.healthScore) || 0).padStart(
-        2,
-        "0",
-      );
-    },
-    growthState() {
-      if (!this.overview.weeklyMinutes) return "萌芽期";
-      if (this.overview.weeklyMinutes < 90) return "抽芽期";
-      if (this.overview.weeklyMinutes < 150) return "生长期";
-      return "舒展期";
-    },
-    stateClass() {
-      return `state-${this.growthState}`;
-    },
-    focusTitle() {
-      if (!this.overview.weeklyMinutes) return "为这一周留下第一条轨迹";
-      if (this.progressRate < 100) return "你正在建立自己的节奏";
-      return "本周节奏已经舒展开来";
-    },
-    focusDescription() {
-      if (!this.overview.weeklyMinutes)
-        return "完成一次轻量运动，开始积累本周健康进度。";
-      if (this.progressRate < 100)
-        return `已经完成${this.overview.weeklyMinutes}分钟，再积累${150 - this.overview.weeklyMinutes}分钟即可达到本周目标。`;
-      return "运动目标已经完成，接下来注意休息与持续记录。";
-    },
-    primaryAction() {
-      return this.overview.weeklyMinutes ? "继续记录" : "开始10分钟活动";
-    },
-    remainingText() {
-      const left = Math.max(0, 150 - (this.overview.weeklyMinutes || 0));
-      return left ? `距离建议运动量还差${left}分钟` : "本周建议运动量已完成";
-    },
-    actions() {
-      if (!this.overview.weeklyMinutes)
-        return [
-          { title: "迈出第一步", description: "今天完成一次10分钟散步。" },
-          {
-            title: "找到固定节奏",
-            description: "选择一个每天容易坚持的时间段。",
-          },
-          { title: "种下周目标", description: "建立每周150分钟运动目标。" },
-        ];
-      return (this.overview.suggestions || [])
-        .slice(0, 3)
-        .map((item, index) => ({
-          title: ["延续今天的节奏", "保持稳定记录", "查看目标进度"][index],
-          description: String(item).replace(/‎/g, ""),
-        }));
-    },
+    progressRate() { return Math.min(100, Math.round((((this.overview && this.overview.weeklyMinutes) || 0) / 150) * 100)) },
+    recoveryScore() { return Math.min(98, Math.round((this.device.metrics.heartRate ? 82 : 0) + (this.device.metrics.sleep === '8小时06分' ? 12 : 5))) },
+    recoveryText() { if (!this.device.worn) return '手环重新佩戴后，这里会根据睡眠和心率变化更新。'; return this.recoveryScore > 85 ? '昨夜恢复充分，今天适合保持轻到中等强度活动。' : '今天建议降低强度，优先补足睡眠和水分。' },
+    nutritionTitle() { if (!this.device.worn) return '先让数据回来'; return this.device.metrics.steps > 9000 ? '今天需要补充能量' : '保持轻盈补给' },
+    nutritionAdvice() { if (!this.device.worn) return '佩戴手环后，会结合活动量与睡眠给出更贴近今天的建议。'; return this.device.metrics.steps > 9000 ? '运动量偏高，晚餐可优先选择蛋白质、粗粮和足量饮水。' : '当前活动量平稳，优先保证早餐蛋白质与全天蔬菜摄入。' },
+    weeklyText() { const minutes = (this.overview && this.overview.weeklyMinutes) || 0; return minutes >= 150 ? '本周基础运动量已完成，留出恢复时间。' : `距离本周建议运动量还差${150 - minutes}分钟，手环会自动记录下一次活动。` }
   },
-  created() {
-    this.loadData();
-  },
-  mounted() {
-    window.addEventListener("resize", this.resizeChart);
-  },
-  beforeDestroy() {
-    window.removeEventListener("resize", this.resizeChart);
-    if (this.chart) this.chart.dispose();
-  },
+  created() { const user = this.$store.state.userInfo || {}; if (user.username && this.profiles.some(item => item.id === user.username)) this.activeProfileId = user.username; this.loadData() },
   methods: {
-    async loadData() {
-      this.loading = true;
-      try {
-        const overviewRes = await getDashboardOverview();
-        this.overview = overviewRes.data;
-        try {
-          const recordsRes = await getSportRecords({ pageNum: 1, pageSize: 4 });
-          this.recentRecords = (recordsRes.data && recordsRes.data.records) || [];
-        } catch (recordsError) {
-          this.recentRecords = [];
-        }
-        this.$nextTick(this.renderChart);
-      } finally {
-        this.loading = false;
-      }
-    },
-    renderChart() {
-      if (!this.$refs.trendChart) return;
-      this.chart = this.chart || echarts.init(this.$refs.trendChart);
-      const source = this.overview.trend || [];
-      const values = this.hasTrend
-        ? source.map((item) => item.minutes)
-        : [5, 8, 6, 12, 9, 14, 11];
-      this.chart.setOption({
-        animationDuration: 650,
-        grid: { left: 5, right: 8, top: 20, bottom: 5, containLabel: true },
-        tooltip: {
-          show: this.hasTrend,
-          trigger: "axis",
-          backgroundColor: "#3f5f4b",
-          borderWidth: 0,
-          textStyle: { color: "#fff" },
-        },
-        xAxis: {
-          type: "category",
-          boundaryGap: false,
-          data: source.map((item) => item.date.slice(5)),
-          axisLine: { show: false },
-          axisTick: { show: false },
-          axisLabel: { color: "#94a098", fontSize: 11 },
-        },
-        yAxis: { type: "value", show: false },
-        series: [
-          {
-            type: "line",
-            smooth: true,
-            symbol: this.hasTrend ? "circle" : "none",
-            symbolSize: 7,
-            silent: !this.hasTrend,
-            data: values,
-            lineStyle: {
-              width: 3,
-              color: this.hasTrend ? "#6d8871" : "rgba(168,198,108,.35)",
-              type: this.hasTrend ? "solid" : "dashed",
-            },
-            itemStyle: {
-              color: "#f4f7f1",
-              borderColor: "#6d8871",
-              borderWidth: 2,
-            },
-            areaStyle: {
-              color: {
-                type: "linear",
-                x: 0,
-                y: 0,
-                x2: 0,
-                y2: 1,
-                colorStops: [
-                  { offset: 0, color: "rgba(168,198,108,.28)" },
-                  { offset: 1, color: "rgba(220,235,221,.03)" },
-                ],
-              },
-            },
-          },
-        ],
-      });
-    },
-    resizeChart() {
-      if (this.chart) this.chart.resize();
-    },
-    handlePrimaryAction() {
-      this.$router.push("/sport/records/add");
-    },
-    formatRecordDate(value) {
-      if (!value) return "--";
-      const date = new Date(value);
-      const today = new Date();
-      if (date.toDateString() === today.toDateString()) return "今天";
-      return `${date.getMonth() + 1}/${date.getDate()}`;
-    },
-  },
-};
+    async loadData() { this.loading = true; try { const overviewRes = await getDashboardOverview(); this.overview = overviewRes.data; try { const recordsRes = await getSportRecords({ pageNum: 1, pageSize: 4 }); this.recentRecords = (recordsRes.data && recordsRes.data.records) || [] } catch (error) { this.recentRecords = [] } } finally { this.loading = false } },
+    async syncDevice() { this.syncing = true; await new Promise(resolve => setTimeout(resolve, 650)); this.syncing = false; this.$message.success(this.device.worn ? '设备数据已同步' : '未检测到佩戴，请重新佩戴手环') },
+    showDeviceInfo() { this.$alert('这是演示设备状态。真实接入时，可在这里绑定蓝牙手环、查看固件和同步记录。', '设备详情', { confirmButtonText: '知道了' }) }
+  }
+}
 </script>
 
 <style scoped>
-.dashboard {
-  max-width: 1280px;
-  margin: 0 auto;
-  color: #25342b;
-}
-.welcome {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding: 10px 2px 30px;
-}
-.date-note,
-.section-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: #6d8871;
-}
-.welcome h1 {
-  margin: 8px 0 7px;
-  font-size: 32px;
-  font-weight: 600;
-}
-.welcome p {
-  font-size: 15px;
-  color: #68756c;
-}
-.welcome-actions {
-  display: flex;
-  gap: 10px;
-}
-.welcome-actions .el-button {
-  height: 42px;
-  padding: 0 20px;
-  border: 0;
-  border-radius: 22px;
-}
-.checkin-button {
-  background: #dcebdd;
-  color: #3f5f4b;
-}
-.record-button {
-  background: #c98b62;
-  color: #fff;
-}
-.rhythm-panel {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(310px, 0.8fr) 1.2fr;
-  gap: 58px;
-  min-height: 310px;
-  padding: 42px 48px;
-  overflow: hidden;
-  border-radius: 28px;
-  background: linear-gradient(120deg, #ecf4ea, #dcebdd);
-  box-shadow: 0 12px 40px rgba(63, 95, 75, 0.08);
-}
-.rhythm-copy,
-.rhythm-data {
-  position: relative;
-  z-index: 2;
-}
-.score-line {
-  display: flex;
-  align-items: flex-end;
-  gap: 14px;
-  margin: 8px 0 4px;
-}
-.score-line strong {
-  font-size: 70px;
-  line-height: 1;
-  font-weight: 500;
-  color: #3f5f4b;
-}
-.score-line small {
-  padding-bottom: 9px;
-  color: #7e8b82;
-}
-.growth-state {
-  display: inline-block;
-  margin: 10px 0 18px;
-  padding: 6px 11px;
-  border-radius: 14px;
-  background: #f2e4d8;
-  color: #946b4e;
-  font-size: 12px;
-}
-.rhythm-copy h2 {
-  font-size: 22px;
-  font-weight: 600;
-  color: #344c3d;
-}
-.rhythm-copy p {
-  max-width: 440px;
-  margin-top: 9px;
-  font-size: 14px;
-  line-height: 1.7;
-  color: #68756c;
-}
-.text-action {
-  margin-top: 22px;
-  border: 0;
-  background: transparent;
-  color: #3f5f4b;
-  font-weight: 600;
-  cursor: pointer;
-}
-.rhythm-data {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.track-line {
-  height: 8px;
-  overflow: hidden;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.7);
-}
-.track-line span {
-  display: block;
-  height: 100%;
-  border-radius: 8px;
-  background: #6d8871;
-  transition: width 0.65s ease;
-}
-.track-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 8px;
-  font-size: 11px;
-  color: #7e8b82;
-}
-.metric-band {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  margin-top: 48px;
-}
-.metric-band > div {
-  padding: 0 24px;
-}
-.metric-band > div + div {
-  border-left: 1px solid rgba(63, 95, 75, 0.16);
-}
-.metric-band span,
-.metric-band small {
-  display: block;
-  color: #7e8b82;
-  font-size: 12px;
-}
-.metric-band strong {
-  display: inline-block;
-  margin: 7px 6px 3px 0;
-  font-size: 32px;
-  font-weight: 500;
-  color: #3f5f4b;
-}
-.panel-vine {
-  position: absolute;
-  top: -28px;
-  right: -30px;
-  width: 300px;
-  opacity: 0.09;
-  pointer-events: none;
-}
-.content-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr);
-  gap: 34px 42px;
-  margin-top: 42px;
-}
-.trend-section,
-.action-section,
-.records-section,
-.goal-section {
-  min-width: 0;
-}
-.section-heading {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-.section-heading h2,
-.goal-section h2 {
-  margin-top: 5px;
-  font-size: 21px;
-  font-weight: 600;
-  color: #344c3d;
-}
-.section-heading a,
-.analysis-link,
-.goal-section a {
-  color: #6d8871;
-  font-size: 13px;
-  text-decoration: none;
-}
-.chart-wrap {
-  position: relative;
-  min-height: 290px;
-  padding: 15px 0 0;
-  background: #f8faf6;
-  border-radius: 26px;
-}
-.trend-chart {
-  height: 275px;
-}
-.trend-empty {
-  position: absolute;
-  inset: 70px 20px auto;
-  text-align: center;
-  pointer-events: none;
-}
-.trend-empty strong {
-  font-size: 16px;
-  color: #3f5f4b;
-}
-.trend-empty p {
-  margin-top: 7px;
-  font-size: 13px;
-  color: #7e8b82;
-}
-.action-section {
-  padding: 28px 30px;
-  border-radius: 26px;
-  background: #ecf4ea;
-}
-.action-timeline {
-  position: relative;
-  margin: 24px 0;
-}
-.action-timeline:before {
-  content: "";
-  position: absolute;
-  left: 13px;
-  top: 12px;
-  bottom: 12px;
-  width: 1px;
-  background: #b9cdbb;
-}
-.timeline-item {
-  position: relative;
-  display: grid;
-  grid-template-columns: 28px 1fr;
-  gap: 15px;
-  padding-bottom: 24px;
-}
-.timeline-node {
-  position: relative;
-  z-index: 1;
-  width: 27px;
-  height: 27px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: #f4f7f1;
-  border: 2px solid #a8c66c;
-  color: #557a46;
-  font-size: 11px;
-}
-.timeline-item strong {
-  font-size: 14px;
-  color: #344c3d;
-}
-.timeline-item p {
-  margin-top: 5px;
-  font-size: 12px;
-  line-height: 1.55;
-  color: #7e8b82;
-}
-.analysis-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-weight: 600;
-}
-.records-section {
-  padding-top: 8px;
-}
-.record-list {
-  border-top: 1px solid #dfe7df;
-}
-.record-row {
-  display: grid;
-  grid-template-columns: 58px 34px 1fr auto;
-  align-items: center;
-  gap: 13px;
-  padding: 17px 0;
-  border-bottom: 1px solid #dfe7df;
-}
-.record-date {
-  font-size: 12px;
-  color: #94a098;
-}
-.record-icon {
-  width: 32px;
-  height: 32px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: #dcebdd;
-  color: #557a46;
-}
-.record-row strong,
-.record-row small {
-  display: block;
-}
-.record-row strong {
-  font-size: 14px;
-  color: #344c3d;
-}
-.record-row small {
-  margin-top: 4px;
-  color: #7e8b82;
-}
-.record-row em {
-  font-style: normal;
-  color: #6d8871;
-  font-weight: 600;
-}
-.records-empty {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 28px 0;
-  border-top: 1px solid #dfe7df;
-  border-bottom: 1px solid #dfe7df;
-}
-.records-empty > span {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: #dcebdd;
-  color: #557a46;
-}
-.records-empty strong {
-  color: #344c3d;
-}
-.records-empty p {
-  margin-top: 5px;
-  font-size: 13px;
-  color: #7e8b82;
-}
-.goal-section {
-  padding: 28px 30px;
-  border-radius: 26px;
-  background: #fcfbf7;
-  box-shadow: 0 12px 40px rgba(63, 95, 75, 0.06);
-}
-.goal-progress {
-  height: 7px;
-  margin: 22px 0 12px;
-  border-radius: 7px;
-  background: #e3ece1;
-}
-.goal-progress span {
-  display: block;
-  height: 100%;
-  border-radius: 7px;
-  background: #6d8871;
-}
-.goal-section p {
-  margin-bottom: 22px;
-  font-size: 13px;
-  color: #7e8b82;
-}
-@media (max-width: 980px) {
-  .rhythm-panel {
-    grid-template-columns: 1fr;
-    gap: 30px;
-  }
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
-  .metric-band {
-    margin-top: 10px;
-  }
-}
-@media (max-width: 680px) {
-  .welcome {
-    display: block;
-  }
-  .welcome-actions {
-    margin-top: 20px;
-  }
-  .rhythm-panel {
-    padding: 30px 24px;
-  }
-  .metric-band {
-    grid-template-columns: 1fr 1fr;
-    gap: 24px 0;
-  }
-  .metric-band > div:nth-child(3) {
-    border-left: 0;
-  }
-  .content-grid {
-    gap: 30px;
-  }
-  .score-line strong {
-    font-size: 58px;
-  }
-  .panel-vine {
-    width: 220px;
-  }
-  .record-row {
-    grid-template-columns: 46px 32px 1fr;
-  }
-  .record-row em {
-    display: none;
-  }
-}
+.dashboard{max-width:1280px;margin:0 auto;color:#25342b}.welcome{display:flex;align-items:flex-end;justify-content:space-between;padding:8px 2px 28px}.date-note,.eyebrow{display:block;color:#6d8871;font-size:11px;font-weight:700;letter-spacing:1.6px}.welcome h1{margin:8px 0 7px;font-size:32px;font-weight:600}.welcome p{color:#68756c;font-size:14px}.welcome-actions{display:flex;align-items:center;gap:10px}.profile-switch{width:170px}.sync-button{height:38px;border:0;border-radius:20px;background:#3f5f4b;color:#fff}.device-hero{display:grid;grid-template-columns:1.2fr .8fr;min-height:270px;overflow:hidden;position:relative;border-radius:28px;background:linear-gradient(115deg,#0b3429,#3f5f4b);box-shadow:0 18px 46px rgba(63,95,75,.17);color:#fff}.device-hero.is-off{background:linear-gradient(115deg,#40524a,#718178)}.device-copy{position:relative;z-index:2;padding:38px 46px}.eyebrow-row{display:flex;align-items:center;gap:12px}.device-copy .eyebrow{color:#c8e1c3}.connection-pill{padding:6px 10px;border-radius:15px;background:rgba(220,235,221,.16);color:#e3f2df;font-size:12px}.connection-pill i{margin-right:5px;color:#a8c66c}.device-copy h2{margin:18px 0 10px;font-size:28px;font-weight:600}.device-copy>p{max-width:530px;color:#d5e6d5;line-height:1.7;font-size:14px}.device-meta{display:flex;gap:24px;align-items:center;margin-top:28px;color:#c7ddc6;font-size:12px}.device-meta i{margin-right:5px}.device-meta button{border:0;background:transparent;color:#e8f5e6;cursor:pointer}.device-visual{position:relative;display:flex;align-items:center;justify-content:center}.device-visual .visual-glow{position:absolute;width:230px;height:230px;border-radius:50%;background:rgba(168,198,108,.18);filter:blur(4px)}.device-visual img{position:relative;width:min(290px,82%);transform:rotate(-9deg);border-radius:24px;mix-blend-mode:screen;opacity:.98}.signal-section{margin-top:34px}.section-heading{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}.section-heading h2{margin-top:6px;font-size:21px;font-weight:600;color:#344c3d}.section-heading a{color:#6d8871;font-size:13px;text-decoration:none}.section-hint{color:#94a098;font-size:12px}.signal-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}.signal-card{min-height:146px;padding:17px 16px;border-radius:20px;background:#fcfbf7;box-shadow:0 10px 28px rgba(63,95,75,.06);transition:transform .2s,box-shadow .2s}.signal-card:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(63,95,75,.12)}.signal-card.muted{background:#f0f3ef;box-shadow:none}.signal-top{display:flex;align-items:center;gap:8px;color:#68756c;font-size:12px}.signal-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:11px}.signal-icon.rose,.signal-spark.rose i{color:#b7686f;background:#f6e4e4}.signal-icon.mint,.signal-spark.mint i{color:#4b8b73;background:#def0e6}.signal-icon.amber,.signal-spark.amber i{color:#a37a4c;background:#f5ead4}.signal-icon.lilac,.signal-spark.lilac i{color:#766f99;background:#eae7f4}.signal-icon.blue,.signal-spark.blue i{color:#5d7fa0;background:#e4edf5}.signal-icon.leaf,.signal-spark.leaf i{color:#557a46;background:#e0eedc}.signal-card strong{display:inline-block;margin-top:18px;color:#344c3d;font-size:26px;font-weight:500}.signal-card small{margin-left:4px;color:#94a098;font-size:11px}.signal-spark{display:flex;align-items:flex-end;gap:3px;height:24px;margin-top:9px}.signal-spark i{display:block;width:7px;border-radius:5px}.signal-spark i:nth-child(1){height:9px}.signal-spark i:nth-child(2){height:15px}.signal-spark i:nth-child(3){height:11px}.signal-spark i:nth-child(4){height:19px}.signal-spark i:nth-child(5){height:14px}.dashboard-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:28px 34px;margin-top:38px}.activity-section,.recovery-section,.nutrition-section,.weekly-section{min-width:0}.activity-list{border-top:1px solid #dfe7df}.activity-row{display:grid;grid-template-columns:48px 34px 1fr 20px;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid #dfe7df}.activity-row time{color:#94a098;font-size:12px}.activity-icon{width:32px;height:32px;display:grid;place-items:center;border-radius:50%;background:#dcebdd;color:#557a46}.activity-row strong{color:#344c3d;font-size:14px}.activity-row p{margin-top:4px;color:#7e8b82;font-size:12px}.activity-check{color:#6d8871}.empty-strip{display:flex;align-items:center;gap:14px;padding:28px 0;border-top:1px solid #dfe7df;border-bottom:1px solid #dfe7df}.empty-strip>i{font-size:27px;color:#6d8871}.empty-strip strong{color:#344c3d}.empty-strip p{margin-top:5px;color:#7e8b82;font-size:12px}.recovery-section,.nutrition-section,.weekly-section{padding:26px 28px;border-radius:24px;background:#ecf4ea}.recovery-section .section-heading,.nutrition-section .section-heading,.weekly-section .section-heading{margin-bottom:10px}.recovery-score{display:flex;align-items:baseline;gap:8px}.recovery-score strong{font-size:55px;font-weight:500;color:#3f5f4b}.recovery-score span{color:#7e8b82;font-size:12px}.recovery-section>p{min-height:38px;color:#68756c;font-size:13px;line-height:1.6}.recovery-bar,.weekly-progress{height:7px;margin:15px 0;border-radius:6px;background:#d1e2d0}.recovery-bar i,.weekly-progress i{display:block;height:100%;border-radius:6px;background:#6d8871;transition:width .5s}.recovery-tags{display:flex;justify-content:space-between;color:#7e8b82;font-size:12px}.recovery-tags i{margin-right:4px;color:#557a46}.nutrition-section{background:#fff9f0}.nutrition-main{display:flex;align-items:center;gap:16px;min-height:92px}.nutrition-orb{width:52px;height:52px;display:grid;place-items:center;border-radius:18px;background:#f4e1c9;color:#a66e45;font-size:22px}.nutrition-main strong{color:#694b37;font-size:16px}.nutrition-main p{margin-top:7px;color:#856f61;font-size:12px;line-height:1.55}.nutrition-foot{display:flex;justify-content:space-between;align-items:center;padding-top:15px;border-top:1px solid #f0dfcb;color:#a0836c;font-size:11px}.nutrition-foot button{border:0;background:transparent;color:#a66e45;font-size:12px;cursor:pointer}.weekly-section{background:#f7faf5}.weekly-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.weekly-stats div+div{border-left:1px solid #dce7d9;padding-left:14px}.weekly-stats strong,.weekly-stats span{display:block}.weekly-stats strong{color:#3f5f4b;font-size:26px;font-weight:500}.weekly-stats span{margin-top:6px;color:#7e8b82;font-size:11px}.weekly-section p{color:#7e8b82;font-size:12px}.profile-popper .el-select-dropdown__item{font-size:12px}@media(max-width:1050px){.signal-grid{grid-template-columns:repeat(3,1fr)}.device-hero{grid-template-columns:1fr .75fr}}@media(max-width:760px){.welcome{display:block}.welcome-actions{margin-top:18px;flex-wrap:wrap}.profile-switch{width:calc(100% - 120px)}.device-hero{display:block}.device-copy{padding:30px 26px 12px}.device-visual{height:180px}.device-visual img{width:220px}.signal-grid{grid-template-columns:1fr 1fr}.dashboard-grid{grid-template-columns:1fr}.device-meta{gap:12px;flex-wrap:wrap}.device-copy h2{font-size:23px}}@media(max-width:470px){.signal-grid{grid-template-columns:1fr}.profile-switch{width:100%}.sync-button{width:100%}.weekly-stats{gap:8px}}
 </style>
