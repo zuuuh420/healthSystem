@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import sportGoalRoutes from './sport-goal'
+import healthDataRoutes from './health-data'
 
 Vue.use(VueRouter)
 
@@ -39,7 +40,8 @@ const commonRoutes = [
 // 合并所有路由
 const routes = [
   ...commonRoutes,
-  ...sportGoalRoutes
+  ...sportGoalRoutes,
+  ...healthDataRoutes
 ]
 
 const router = new VueRouter({
