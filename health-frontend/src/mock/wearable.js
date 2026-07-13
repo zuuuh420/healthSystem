@@ -39,5 +39,14 @@ export const wearableProfiles = [
 ]
 
 export function findWearableProfile(id) {
-  return wearableProfiles.find(profile => profile.id === id) || wearableProfiles[0]
+  return wearableProfiles.find(profile => profile.id === id) || {
+    id: id || 'current-user',
+    name: '当前用户',
+    device: '知衡健康手环 ZHISHU',
+    worn: false,
+    battery: 0,
+    lastSync: '尚未绑定设备',
+    metrics: { heartRate: null, oxygen: null, temperature: null, sleep: '--', pressure: '--', bodyFat: null, steps: null },
+    activities: []
+  }
 }
