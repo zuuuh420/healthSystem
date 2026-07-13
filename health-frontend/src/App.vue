@@ -24,6 +24,21 @@
               >健康分析</span
             ></el-menu-item
           >
+          <el-menu-item index="/report"
+            ><i class="el-icon-document" /><span slot="title"
+              >健康周报</span
+            ></el-menu-item
+          >
+          <el-menu-item index="/health-data"
+            ><i class="el-icon-monitor" /><span slot="title"
+              >身体数据</span
+            ></el-menu-item
+          >
+          <el-menu-item index="/diet"
+            ><i class="el-icon-food" /><span slot="title"
+              >饮食记录</span
+            ></el-menu-item
+          >
           <el-submenu index="sport"
             ><template slot="title"
               ><i class="el-icon-basketball" /><span>运动管理</span></template
@@ -371,6 +386,12 @@ body { overflow: hidden; }
   background: #fcfbf7 !important;
   box-shadow: 0 12px 40px rgba(63, 95, 75, 0.06) !important;
 }
+.el-button { border-radius: 12px; font-weight: 600; transition: background .2s, border-color .2s, transform .2s; }
+.el-button:hover { transform: translateY(-1px); }
+.el-button--primary { color: #fff; background: #3f5f4b; border-color: #3f5f4b; }
+.el-button--primary:hover, .el-button--primary:focus { color: #fff; background: #6d8871; border-color: #6d8871; }
+.el-button--danger { color: #fff; background: #c98b62; border-color: #c98b62; }
+.el-button--default { color: #3f5f4b; background: #fcfbf7; border-color: #dce5da; }
 @media (max-width: 820px) {
   .sidebar {
     width: 72px !important;

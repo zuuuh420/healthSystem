@@ -1,159 +1,16 @@
 <template>
-  <div class="profile">
-    <h2 class="page-title">个人中心</h2>
-
-    <el-row :gutter="20">
-      <el-col :span="8">
-        <el-card class="user-card">
-          <div class="user-avatar">
-            <i class="el-icon-user-solid"></i>
-          </div>
-          <h3>{{ userInfo.nickname || userInfo.username }}</h3>
-          <p class="user-email">{{ userInfo.email }}</p>
-          <p class="user-role">角色：{{ userInfo.role === 'admin' ? '管理员' : '普通用户' }}</p>
-        </el-card>
-      </el-col>
-
-      <el-col :span="16">
-        <el-card>
-          <template #header>
-            <span>修改密码</span>
-          </template>
-          <el-form ref="form" :model="form" :rules="rules" label-width="100px">
-            <el-form-item label="旧密码" prop="oldPassword">
-              <el-input v-model="form.oldPassword" type="password" show-password />
-            </el-form-item>
-            <el-form-item label="新密码" prop="newPassword">
-              <el-input v-model="form.newPassword" type="password" show-password />
-            </el-form-item>
-            <el-form-item label="确认密码" prop="confirmPassword">
-              <el-input v-model="form.confirmPassword" type="password" show-password />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="handleChangePassword" :loading="loading">
-                修改密码
-              </el-button>
-            </el-form-item>
-          </el-form>
-        </el-card>
-      </el-col>
-    </el-row>
-  </div>
+  <section class="profile-page">
+    <header class="profile-heading"><div><span class="profile-label">YOUR ACCOUNT</span><h1>个人中心</h1><p>管理账户信息与数据安全设置。</p></div></header>
+    <div class="profile-grid">
+      <section class="identity-panel"><div class="identity-mark">{{ userInitial }}</div><span class="profile-label">PERSONAL PROFILE</span><h2>{{ userInfo.nickname || userInfo.username }}</h2><p>{{ userInfo.email || '还没有填写邮箱' }}</p><span class="role-pill">{{ userInfo.role === 'admin' ? '管理员' : '健康记录者' }}</span><div class="identity-note"><i class="el-icon-lock" /> 你的健康记录仅对当前账户可见</div></section>
+      <section class="password-panel"><span class="profile-label">SECURITY</span><h2>修改登录密码</h2><p class="panel-intro">定期更新密码，保护你的健康数据。</p><el-form ref="form" :model="form" :rules="rules" label-position="top"><el-form-item label="当前密码" prop="oldPassword"><el-input v-model="form.oldPassword" type="password" show-password placeholder="请输入当前密码" /></el-form-item><el-form-item label="新密码" prop="newPassword"><el-input v-model="form.newPassword" type="password" show-password placeholder="至少6位字符" /></el-form-item><el-form-item label="确认新密码" prop="confirmPassword"><el-input v-model="form.confirmPassword" type="password" show-password placeholder="再次输入新密码" @keyup.enter.native="handleChangePassword" /></el-form-item><el-button class="save-button" type="primary" :loading="loading" @click="handleChangePassword">保存新密码 <i class="el-icon-right" /></el-button></el-form></section>
+    </div>
+  </section>
 </template>
-
 <script>
 import { changePassword } from '@/api/auth'
-
-export default {
-  name: 'Profile',
-  data() {
-    const validateConfirm = (rule, value, callback) => {
-      if (value !== this.form.newPassword) {
-        callback(new Error('两次输入的密码不一致'))
-      } else {
-        callback()
-      }
-    }
-
-    return {
-      loading: false,
-      form: {
-        oldPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      },
-      rules: {
-        oldPassword: [
-          { required: true, message: '请输入旧密码', trigger: 'blur' }
-        ],
-        newPassword: [
-          { required: true, message: '请输入新密码', trigger: 'blur' },
-          { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
-        ],
-        confirmPassword: [
-          { required: true, message: '请确认密码', trigger: 'blur' },
-          { validator: validateConfirm, trigger: 'blur' }
-        ]
-      }
-    }
-  },
-  computed: {
-    userInfo() {
-      const info = localStorage.getItem('userInfo')
-      return info ? JSON.parse(info) : {}
-    }
-  },
-  methods: {
-    async handleChangePassword() {
-      this.$refs.form.validate(async (valid) => {
-        if (valid) {
-          this.loading = true
-          try {
-            const res = await changePassword({
-              oldPassword: this.form.oldPassword,
-              newPassword: this.form.newPassword
-            })
-            if (res.code === 200) {
-              this.$message.success('密码修改成功')
-              this.form = { oldPassword: '', newPassword: '', confirmPassword: '' }
-            } else {
-              this.$message.error(res.msg || '修改失败')
-            }
-          } catch (error) {
-            this.$message.error('修改失败')
-          } finally {
-            this.loading = false
-          }
-        }
-      })
-    }
-  }
-}
+export default { name:'Profile', data(){const confirm=(r,v,c)=>v!==this.form.newPassword?c(new Error('两次输入的密码不一致')):c();return{loading:false,form:{oldPassword:'',newPassword:'',confirmPassword:''},rules:{oldPassword:[{required:true,message:'请输入当前密码',trigger:'blur'}],newPassword:[{required:true,message:'请输入新密码',trigger:'blur'},{min:6,message:'密码至少6位',trigger:'blur'}],confirmPassword:[{required:true,message:'请确认新密码',trigger:'blur'},{validator:confirm,trigger:'blur'}]}}},computed:{userInfo(){return this.$store.state.userInfo||{}},userInitial(){return(this.userInfo.nickname||this.userInfo.username||'健').slice(0,1)}},methods:{handleChangePassword(){this.$refs.form.validate(async valid=>{if(!valid)return;this.loading=true;try{await changePassword({oldPassword:this.form.oldPassword,newPassword:this.form.newPassword});this.$message.success('密码已更新');this.form={oldPassword:'',newPassword:'',confirmPassword:''};this.$refs.form.resetFields()}catch(error){this.$message.error((error.response&&error.response.data&&error.response.data.msg)||'密码更新失败，请稍后重试')}finally{this.loading=false}})}}}
 </script>
-
 <style scoped>
-.profile {
-  padding: 20px;
-}
-
-.page-title {
-  margin-bottom: 20px;
-  color: #303133;
-}
-
-.user-card {
-  text-align: center;
-  padding: 30px 20px;
-}
-
-.user-avatar {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #409EFF, #66b1ff);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 20px;
-}
-
-.user-avatar i {
-  font-size: 50px;
-  color: #fff;
-}
-
-.user-card h3 {
-  font-size: 20px;
-  color: #303133;
-  margin-bottom: 10px;
-}
-
-.user-email {
-  color: #909399;
-  margin-bottom: 5px;
-}
-
-.user-role {
-  color: #606266;
-}
+.profile-page{max-width:1100px;margin:0 auto;color:#25342b}.profile-heading{margin-bottom:30px}.profile-heading h1{margin:8px 0;font-size:32px;font-weight:600}.profile-heading p{color:#68756c}.profile-label{display:block;font-size:11px;font-weight:700;letter-spacing:1.7px;color:#6d8871}.profile-grid{display:grid;grid-template-columns:.75fr 1.25fr;gap:26px}.identity-panel,.password-panel{padding:36px;border-radius:26px;background:#fcfbf7;box-shadow:0 12px 40px rgba(63,95,75,.07)}.identity-panel{position:relative;overflow:hidden;background:linear-gradient(145deg,#ecf4ea,#dcebdd)}.identity-panel:after{content:'';position:absolute;right:-35px;bottom:-50px;width:230px;height:230px;background:url('../assets/vine-transparent.webp') center/contain no-repeat;opacity:.12}.identity-mark{position:relative;z-index:1;width:70px;height:70px;display:grid;place-items:center;margin-bottom:30px;border-radius:22px;background:#6d8871;color:#fff;font-size:28px;font-weight:600}.identity-panel h2,.password-panel h2{margin:11px 0 8px;font-size:23px;color:#344c3d}.identity-panel>p{color:#68756c;font-size:13px}.role-pill{display:inline-block;margin-top:20px;padding:7px 12px;border-radius:14px;background:rgba(255,255,255,.58);color:#557a46;font-size:12px}.identity-note{position:relative;z-index:1;margin-top:80px;padding-top:18px;border-top:1px solid rgba(63,95,75,.16);color:#68756c;font-size:12px}.panel-intro{margin-bottom:28px;color:#7e8b82;font-size:13px}.password-panel >>> .el-form-item__label{color:#55645b;font-weight:600}.password-panel >>> .el-input__inner{height:47px;border:1px solid #dce5da;border-radius:12px;background:#f4f7f1}.save-button{height:45px;margin-top:8px;padding:0 22px}@media(max-width:720px){.profile-grid{grid-template-columns:1fr}.identity-note{margin-top:45px}}
 </style>
