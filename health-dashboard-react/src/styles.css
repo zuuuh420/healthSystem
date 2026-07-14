@@ -229,7 +229,7 @@ body,.main-content{background:var(--page-bg)}
 .family-status-line{display:flex;align-items:center;gap:6px;margin:16px 0 12px;padding-top:12px;border-top:1px solid #edf1ec;color:#87948b;font-size:11px}
 .family-status-line>span:last-child{margin-left:auto}
 .family-online-icon{color:#4b9461}
-.family-vitals-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid #e5eee3;border-radius:12px;background:#f8fbf7}
+.family-vitals-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid #e5eee3;border-radius:12px;background:#f8fbf7}
 .family-vital{min-width:0;padding:12px 13px}
 .family-vital+ .family-vital{border-left:1px solid #e5eee3}
 .family-vital span,.family-vital strong{display:block}
@@ -270,7 +270,7 @@ body,.main-content{background:var(--page-bg)}
 .family-alert--success{border-color:#d7ead8;background:#edf7ed;color:#4d825c}
 .family-alert--info{border-color:#dce9e0;background:#f1f7f2;color:#5d7b66}
 .family-alert--warning{border-color:#f0dfcf;background:#fff6ee;color:#a87551}
-.family-detail-vitals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.family-detail-vitals{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
 .family-detail-vitals>div{display:grid;gap:7px;padding:16px;border:1px solid #e3ebe1;border-radius:14px;background:#fff;box-shadow:var(--shadow-card)}
 .family-detail-vitals svg{color:#5f906c}
 .family-detail-vitals span{color:#849188;font-size:12px}
@@ -288,7 +288,7 @@ body,.main-content{background:var(--page-bg)}
 .family-detail-button{justify-content:flex-start;padding:0}
 .family-detail-arrow{transform:rotate(180deg)}
 @media(max-width:900px){.family-dashboard{padding-top:18px}.family-layout{grid-template-columns:1fr}.family-link-card{position:static}.family-page-heading{align-items:flex-start;flex-direction:column}.family-summary{align-self:stretch;justify-content:flex-start}}
-@media(max-width:560px){.family-vitals-grid{grid-template-columns:repeat(2,1fr)}.family-vital:nth-child(3){border-left:0;border-top:1px solid #e5eee3}.family-vital:nth-child(4){border-top:1px solid #e5eee3}.family-member-card{padding:16px}.family-device-state{padding:5px 8px}.family-status-line{align-items:flex-start;flex-wrap:wrap}.family-status-line>span:last-child{margin-left:0;width:100%}}
+@media(max-width:560px){.family-vitals-grid{grid-template-columns:repeat(2,1fr)}.family-vital:nth-child(3){border-left:0;border-top:1px solid #e5eee3}.family-vital:nth-child(4),.family-vital:nth-child(5){border-top:1px solid #e5eee3}.family-vital:nth-child(5){border-left:0}.family-member-card{padding:16px}.family-device-state{padding:5px 8px}.family-status-line{align-items:flex-start;flex-wrap:wrap}.family-status-line>span:last-child{margin-left:0;width:100%}}
 @media(max-width:700px){.family-detail-heading{align-items:flex-start;flex-wrap:wrap}.family-detail-heading>.family-device-state{margin-left:55px}.family-detail-vitals{grid-template-columns:repeat(2,1fr)}.family-history-card{padding:16px 14px;overflow-x:auto}.family-trend-chart{min-width:620px}.family-detail-empty{align-items:flex-start;flex-direction:column}}
 
 /* Local health assistant */

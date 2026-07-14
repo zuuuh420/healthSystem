@@ -10,6 +10,21 @@ type RelationView = {
   createdAt?: string
   updatedAt?: string
 }
+type SnapshotView = {
+  relationId: number
+  memberUserId: number
+  memberNickname: string
+  relationship: string
+  deviceName: string
+  deviceOnline: boolean
+  wearing: boolean
+  heartRate: number | null
+  oxygen: number | null
+  temperature: number | null
+  sleepMinutes: number | null
+  steps: number | null
+  measuredAt?: string
+}
 
 function getAuthHeaders(): Record<string, string> {
   const token = window.localStorage.getItem('token') ?? window.localStorage.getItem('accessToken')
@@ -44,6 +59,37 @@ function toMember(relation: RelationView): FamilyMember {
   }
 }
 
+function minutesToSleep(minutes: number) {
+  return `${Math.floor(minutes / 60)}小时${minutes % 60}分`
+}
+
+function toSnapshotMember(snapshot: SnapshotView): FamilyMember {
+  const name = snapshot.memberNickname || '已关联家人'
+  const available = snapshot.deviceOnline && snapshot.wearing
+    && snapshot.heartRate !== null && snapshot.oxygen !== null
+    && snapshot.temperature !== null && snapshot.sleepMinutes !== null
+    && snapshot.steps !== null
+  return {
+    id: `family-user-${snapshot.memberUserId}`,
+    name,
+    relationship: snapshot.relationship,
+    initials: name.slice(0, 1),
+    linkedAt: '',
+    deviceName: snapshot.deviceName,
+    deviceOnline: snapshot.deviceOnline,
+    wearing: snapshot.wearing,
+    vitals: available ? {
+      heartRate: snapshot.heartRate!,
+      oxygen: snapshot.oxygen!,
+      temperature: snapshot.temperature!,
+      sleep: minutesToSleep(snapshot.sleepMinutes!),
+      steps: snapshot.steps!
+    } : null,
+    history: [],
+    lastSyncAt: snapshot.measuredAt ? '刚刚' : '尚未同步'
+  }
+}
+
 export async function loadFamilyRelations() {
   const token = window.localStorage.getItem('token') ?? window.localStorage.getItem('accessToken')
   if (!token) return null
@@ -60,4 +106,11 @@ export async function createFamilyRelation(inviteCode: string, relationship = '�
     body: JSON.stringify({ inviteCode, relationship })
   })
   return toMember(relation)
+}
+
+export async function loadFamilyHealthSnapshots() {
+  const token = window.localStorage.getItem('token') ?? window.localStorage.getItem('accessToken')
+  if (!token) return null
+  const snapshots = await request<SnapshotView[]>('/family/health-snapshots')
+  return snapshots.map(toSnapshotMember)
 }

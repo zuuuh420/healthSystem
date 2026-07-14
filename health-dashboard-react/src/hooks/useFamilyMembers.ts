@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FamilyMember } from '../types'
-import { createFamilyRelation, loadFamilyRelations } from '../services/familyRelations'
+import { createFamilyRelation, loadFamilyHealthSnapshots, loadFamilyRelations } from '../services/familyRelations'
 
 const DEMO_INVITE_CODE = 'FAMILY-2026'
 
@@ -8,7 +8,7 @@ const seedMembers: FamilyMember[] = [
   {
     id: 'family-dad', name: '爸爸', relationship: '父亲', initials: '爸', linkedAt: '2026-07-12',
     deviceName: '知衡 Band 2', deviceOnline: true, wearing: true,
-    vitals: { heartRate: 72, oxygen: 98, temperature: 36.6, sleep: '7小时18分' }, history: [
+    vitals: { heartRate: 72, oxygen: 98, temperature: 36.6, sleep: '7小时18分', steps: 6842 }, history: [
       { date: '7/08', heartRate: 70, oxygen: 98, sleep: 7.1 }, { date: '7/09', heartRate: 73, oxygen: 98, sleep: 6.8 },
       { date: '7/10', heartRate: 71, oxygen: 99, sleep: 7.4 }, { date: '7/11', heartRate: 72, oxygen: 98, sleep: 7.0 },
       { date: '7/12', heartRate: 74, oxygen: 98, sleep: 7.6 }, { date: '7/13', heartRate: 71, oxygen: 98, sleep: 7.2 },
@@ -31,10 +31,13 @@ export function useFamilyMembers() {
 
   useEffect(() => {
     let timer: number | undefined
+    let snapshotTimer: number | undefined
     let active = true
+    let remoteMode = false
     const clearTimer = () => { if (timer !== undefined) window.clearInterval(timer); timer = undefined }
+    const clearSnapshotTimer = () => { if (snapshotTimer !== undefined) window.clearInterval(snapshotTimer); snapshotTimer = undefined }
     const update = () => {
-      if (!active || document.visibilityState === 'hidden') return
+      if (!active || remoteMode || document.visibilityState === 'hidden') return
       setMembers(current => current.map(member => {
         if (!member.wearing || !member.vitals) return member
         return {
@@ -43,23 +46,46 @@ export function useFamilyMembers() {
             ...member.vitals,
             heartRate: vary(member.vitals.heartRate, 68, 78),
             oxygen: member.vitals.oxygen === 98 && Math.random() > .8 ? 97 : 98,
-            temperature: Number((member.vitals.temperature === 36.6 ? 36.7 : 36.6).toFixed(1))
+            temperature: Number((member.vitals.temperature === 36.6 ? 36.7 : 36.6).toFixed(1)),
+            steps: member.vitals.steps + Math.floor(Math.random() * 5)
           },
           lastSyncAt: '刚刚'
         }
       }))
     }
-    const resume = () => { clearTimer(); if (document.visibilityState === 'visible') timer = window.setInterval(update, 5000) }
+    const refreshRemoteSnapshots = () => {
+      if (!active || !remoteMode || document.visibilityState === 'hidden') return
+      void loadFamilyHealthSnapshots().then(remoteMembers => {
+        if (remoteMembers) setMembers(remoteMembers)
+      }).catch(() => setMessage('家人设备数据暂时无法更新。'))
+    }
+    const resume = () => {
+      clearTimer()
+      clearSnapshotTimer()
+      if (document.visibilityState !== 'visible') return
+      if (remoteMode) snapshotTimer = window.setInterval(refreshRemoteSnapshots, 5000)
+      else timer = window.setInterval(update, 5000)
+    }
     resume()
     void loadFamilyRelations().then(snapshot => {
       if (!snapshot) return
+      remoteMode = true
       setInviteCode(snapshot.inviteCode)
-      setMembers(snapshot.members)
+      return loadFamilyHealthSnapshots().then(remoteMembers => {
+        setMembers(remoteMembers ?? snapshot.members)
+        resume()
+      })
     }).catch(() => {
+      remoteMode = false
+      resume()
       setMessage('后端暂不可用，当前显示本地演示数据。')
     })
-    document.addEventListener('visibilitychange', resume)
-    return () => { active = false; clearTimer(); document.removeEventListener('visibilitychange', resume) }
+    const handleVisibilityChange = () => {
+      resume()
+      if (document.visibilityState === 'visible') refreshRemoteSnapshots()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => { active = false; clearTimer(); clearSnapshotTimer(); document.removeEventListener('visibilitychange', handleVisibilityChange) }
   }, [])
 
   const addByInviteCode = async (code: string) => {
