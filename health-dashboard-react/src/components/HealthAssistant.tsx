@@ -18,10 +18,12 @@ function answerQuestion(question: string, members: FamilyMember[], vitals: Simul
     if (text.includes('在线') || text.includes('设备')) return `${matched.name}当前${matched.deviceOnline ? '设备在线' : '设备离线'}，${matched.wearing ? '手环已佩戴。' : '手环未佩戴。'}`
     return `${matched.name}当前${matched.wearing ? '已佩戴手环，设备在线' : '未佩戴手环'}，上次同步时间为${matched.lastSyncAt}。`
   }
-  if (text.includes('我的') || text.includes('我现在') || text.includes('本人')) {
+  if (text.includes('我') || text.includes('本人')) {
     if (text.includes('心率')) return `你当前心率约 ${vitals.heartRate} bpm。`
     if (text.includes('血氧')) return `你当前血氧为 ${vitals.oxygen}%。`
     if (text.includes('体温')) return `你当前体温为 ${vitals.temperature.toFixed(1)}°C。`
+    if (text.includes('睡眠') || text.includes('睡得')) return `你昨夜睡眠约 ${vitals.sleep}，这是设备记录的结果，仅供日常参考。`
+    if (text.includes('步数') || text.includes('走了多少')) return `你今天约走了 ${vitals.steps.toLocaleString()} 步。`
   }
   if (text.includes('家人') || text.includes('谁')) {
     return members.map(member => `${member.name}${member.wearing ? '已佩戴' : '未佩戴'}`).join('，') + '。你可以继续问某位家人的心率、睡眠或设备状态。'
@@ -33,7 +35,7 @@ export function HealthAssistant({ family, userVitals }: { family: FamilyMember[]
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [messages, setMessages] = useState<Message[]>([{ id: 1, role: 'assistant', text: '你好，我是知衡健康助手。我只读取当前用户和已授权家人的数据，可以帮你查看佩戴状态、设备在线情况和健康指标。' }])
-  const suggestions = useMemo(() => ['爸爸今天有没有佩戴？', '爸爸今天走了多少步？', '妈妈最近睡眠怎么样？', '我现在的心率是多少？'], [])
+  const suggestions = useMemo(() => ['爸爸今天有没有佩戴？', '爸爸今天走了多少步？', '我昨夜睡得怎么样？', '我今天走了多少步？'], [])
 
   const send = async (value = input) => {
     const question = value.trim()
