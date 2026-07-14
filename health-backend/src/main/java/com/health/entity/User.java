@@ -27,6 +27,11 @@ public class User {
     private String avatar;
 
     /**
+     * 每个用户独立的家人关联码
+     */
+    private String inviteCode;
+
+    /**
      * 状态：1启用 0禁用
      */
     private Integer status;

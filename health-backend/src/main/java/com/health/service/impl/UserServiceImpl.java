@@ -10,11 +10,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
+
 /**
  * 用户Service实现类
  */
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+
+    private static final String INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    private static final SecureRandom INVITE_RANDOM = new SecureRandom();
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -41,8 +46,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setStatus(1);
         user.setRole("user");
+        user.setInviteCode(generateUniqueInviteCode());
 
         return save(user);
+    }
+
+    private String generateUniqueInviteCode() {
+        for (int attempt = 0; attempt < 10; attempt++) {
+            StringBuilder code = new StringBuilder("ZH");
+            for (int i = 0; i < 10; i++) {
+                code.append(INVITE_ALPHABET.charAt(INVITE_RANDOM.nextInt(INVITE_ALPHABET.length())));
+            }
+            LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(User::getInviteCode, code.toString());
+            if (getOne(wrapper, false) == null) return code.toString();
+        }
+        throw new IllegalStateException("无法生成唯一关联码，请稍后重试");
     }
 
     @Override

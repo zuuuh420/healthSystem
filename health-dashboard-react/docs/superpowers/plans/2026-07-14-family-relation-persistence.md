@@ -27,7 +27,7 @@
 **Interfaces:**
 - Produces entity fields `id`, `ownerUserId`, `memberUserId`, `relationship`, `status`, `createdAt`, `updatedAt`.
 
-- [ ] **Step 1: Write the failing mapper contract test**
+- [x] **Step 1: Write the failing mapper contract test**
 
 Create a test that expects the relation table to exist and allows a unique active relation. The test must use the existing test database and clean only rows created by the test.
 
@@ -42,7 +42,7 @@ void familyRelationTableAcceptsOneRelation() {
 }
 ```
 
-- [ ] **Step 2: Run the test and verify the expected missing-table failure**
+- [x] **Step 2: Run the test and verify the expected missing-table failure**
 
 Run from `health-backend`:
 
@@ -52,7 +52,7 @@ mvn -q -Dtest=FamilyRelationSchemaTest test
 
 Expected: failure because `family_relation` does not exist.
 
-- [ ] **Step 3: Add the schema and entity**
+- [x] **Step 3: Add the schema and entity**
 
 Use this schema:
 
@@ -73,11 +73,11 @@ CREATE TABLE IF NOT EXISTS family_relation (
 
 Annotate `FamilyRelation` with `@TableName("family_relation")`, use `@TableId(type = IdType.AUTO)`, and map camelCase fields through the existing MyBatis configuration.
 
-- [ ] **Step 4: Run the schema test again**
+- [x] **Step 4: Run the schema test again**
 
 Run the same command. Expected: PASS after the schema is applied to the test database.
 
-- [ ] **Step 5: Commit the schema/model task**
+- [x] **Step 5: Commit the schema/model task**
 
 ```powershell
 git add health-backend/src/main/resources/db/family_relation.sql health-backend/src/main/java/com/health/entity/FamilyRelation.java health-backend/src/test/java/com/health/FamilyRelationSchemaTest.java
@@ -98,27 +98,27 @@ git commit -m "feat: add family relation persistence model"
 - `FamilyRelationMapper.findByOwnerAndId(Long ownerUserId, Long id)` scopes ownership.
 - `FamilyRelationMapper.findByInviteCode(String inviteCode)` resolves a user through `user.invite_code`.
 
-- [ ] **Step 1: Write failing service tests for unique invite lookup and owner scoping**
+- [x] **Step 1: Write failing service tests for unique invite lookup and owner scoping**
 
 Cover these exact cases: user 2 receives a non-empty code; user 2 can list its relation; user 3 cannot delete user 2's relation; a duplicate `(owner_user_id, member_user_id)` is rejected.
 
-- [ ] **Step 2: Run the focused tests and verify they fail**
+- [x] **Step 2: Run the focused tests and verify they fail**
 
 ```powershell
 mvn -q -Dtest=FamilyRelationServiceTest test
 ```
 
-- [ ] **Step 3: Add `invite_code` to the user schema/model and mapper methods**
+- [x] **Step 3: Add `invite_code` to the user schema/model and mapper methods**
 
 Use a unique `VARCHAR(24)` column. Generate missing codes with uppercase `ZH` plus 10 random alphanumeric characters, retrying on duplicate key. Never accept a code from the request when creating a user relation.
 
-- [ ] **Step 4: Run focused tests and verify they pass**
+- [x] **Step 4: Run focused tests and verify they pass**
 
 ```powershell
 mvn -q -Dtest=FamilyRelationServiceTest test
 ```
 
-- [ ] **Step 5: Commit the mapper/code task**
+- [x] **Step 5: Commit the mapper/code task**
 
 ```powershell
 git add health-backend/src/main/java/com/health/entity/User.java health-backend/src/main/java/com/health/mapper/FamilyRelationMapper.java health-backend/src/main/java/com/health/dto
@@ -140,27 +140,27 @@ git commit -m "feat: add per-user family invite codes"
 - `DELETE /family/relations/{id}` revokes only a relation owned by the current user.
 - `PATCH /family/relations/{id}` updates `relationship` or `status` only for the current owner.
 
-- [ ] **Step 1: Write failing MockMvc tests**
+- [x] **Step 1: Write failing MockMvc tests**
 
 Assert unauthenticated requests return 401, owner-scoped list returns only active rows, and a second user cannot delete the first user's relation.
 
-- [ ] **Step 2: Run the MockMvc tests and verify failure**
+- [x] **Step 2: Run the MockMvc tests and verify failure**
 
 ```powershell
 mvn -q -Dtest=FamilyRelationControllerTest test
 ```
 
-- [ ] **Step 3: Implement service validation and controller endpoints**
+- [x] **Step 3: Implement service validation and controller endpoints**
 
 Resolve the current user with `SecurityUtil`, reject blank invite codes and self-association, map duplicate key/database errors to a clear business error, and use `Result.success(...)` / `Result.error(...)` consistently with existing controllers.
 
-- [ ] **Step 4: Run focused tests and verify pass**
+- [x] **Step 4: Run focused tests and verify pass**
 
 ```powershell
 mvn -q -Dtest=FamilyRelationControllerTest test
 ```
 
-- [ ] **Step 5: Commit the API task**
+- [x] **Step 5: Commit the API task**
 
 ```powershell
 git add health-backend/src/main/java/com/health/service health-backend/src/main/java/com/health/controller/FamilyRelationController.java health-backend/src/main/java/com/health/vo health-backend/src/test/java/com/health/FamilyRelationControllerTest.java
@@ -172,11 +172,11 @@ git commit -m "feat: add authorized family relation APIs"
 **Files:**
 - Modify: `health-dashboard-react/docs/superpowers/plans/2026-07-14-family-relation-persistence.md` to mark completed steps.
 
-- [ ] **Step 1: Apply the SQL schema to the configured development database**
+- [x] **Step 1: Apply the SQL schema to the configured development database**
 
 Run the SQL file with the project's configured MySQL connection, then verify `user.invite_code` and `family_relation` exist.
 
-- [ ] **Step 2: Run the full backend test suite**
+- [x] **Step 2: Run the full backend test suite**
 
 ```powershell
 mvn -q test
@@ -185,7 +185,7 @@ mvn -q -DskipTests package
 
 Expected: exit code 0 for both commands.
 
-- [ ] **Step 3: Run the frontend build**
+- [x] **Step 3: Run the frontend build**
 
 ```powershell
 npm run build
@@ -193,7 +193,7 @@ npm run build
 
 Expected: exit code 0; current local family UI remains unchanged.
 
-- [ ] **Step 4: Check the diff and status**
+- [x] **Step 4: Check the diff and status**
 
 ```powershell
 git diff --check
