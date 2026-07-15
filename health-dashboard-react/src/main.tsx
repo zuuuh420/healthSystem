@@ -5,6 +5,7 @@ import './styles.css'
 import './report.css'
 import './device.css'
 import './wellness.css'
+import './page-layout.css'
 
 const params = new URLSearchParams(window.location.search)
 const handoffToken = params.get('token')

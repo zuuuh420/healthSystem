@@ -1,0 +1,19 @@
+/* Shared page geometry: every view sits on the same stable content rail. */
+html{scrollbar-gutter:stable}
+body{overflow-y:scroll}
+.app-shell{--sidebar-width:220px}
+.app-shell:has(.sidebar--collapsed){--sidebar-width:76px}
+.main-content{width:calc(100% - var(--sidebar-width));margin-left:var(--sidebar-width);min-width:0}
+.dashboard-content{width:100%;max-width:1440px;margin:0 auto}
+.dashboard-content--family{max-width:1440px;padding-left:24px;padding-right:24px}
+.monitoring-page,.analysis-page,.report-page,.device-page,.wellness-page,.profile-page{width:100%;max-width:none;margin:0;padding-inline:0}
+.monitoring-heading,.analysis-heading,.report-heading,.device-page-heading,.wellness-heading{min-height:74px}
+.monitoring-metrics,.analysis-kpis,.report-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+.monitoring-lower-grid,.analysis-main-grid,.report-content-grid,.device-page-grid,.wellness-grid{grid-template-columns:minmax(0,1.6fr) minmax(360px,.9fr)}
+.device-page-grid{align-items:stretch}.device-page-grid>.device-card,.device-detail-column{height:100%}.device-detail-column{grid-template-rows:1fr 1fr}
+.analysis-main-grid>.trend-card,.monitoring-trend-card,.report-section-card,.device-detail-card{min-height:0}
+@media(max-width:1100px){.monitoring-metrics,.analysis-kpis,.report-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.monitoring-lower-grid,.analysis-main-grid,.report-content-grid,.device-page-grid,.wellness-grid{grid-template-columns:minmax(0,1.45fr) minmax(300px,.9fr)}}
+@media(max-width:850px){.monitoring-lower-grid,.analysis-main-grid,.report-content-grid,.device-page-grid,.wellness-grid{grid-template-columns:1fr}.device-detail-column{grid-template-rows:auto auto}}
+@media(max-width:600px){.monitoring-metrics,.analysis-kpis,.report-metrics{grid-template-columns:1fr}.monitoring-heading,.analysis-heading,.report-heading,.device-page-heading,.wellness-heading{min-height:0}}
+@media(max-width:1180px){.app-shell{--sidebar-width:190px}.app-shell:has(.sidebar--collapsed){--sidebar-width:190px}}
+@media(max-width:680px){.app-shell{--sidebar-width:70px}.app-shell:has(.sidebar--collapsed){--sidebar-width:70px}.dashboard-content--family{padding-left:14px;padding-right:14px}}
