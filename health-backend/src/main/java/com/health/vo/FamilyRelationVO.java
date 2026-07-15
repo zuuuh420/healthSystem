@@ -9,6 +9,8 @@ public class FamilyRelationVO {
     private Long id;
     private Long memberUserId;
     private String memberNickname;
+    private String memberOriginalNickname;
+    private String memberInviteCode;
     private String relationship;
     private String status;
     private LocalDateTime createdAt;

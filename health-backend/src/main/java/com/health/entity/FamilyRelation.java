@@ -20,6 +20,8 @@ public class FamilyRelation {
 
     private String relationship;
 
+    private String displayName;
+
     private String status;
 
     private LocalDateTime createdAt;

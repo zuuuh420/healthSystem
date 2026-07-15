@@ -101,4 +101,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setPassword(passwordEncoder.encode(newPassword));
         return updateById(user);
     }
+
+    @Override
+    public boolean updateProfile(Long userId, String nickname, String email, String phone) {
+        User user = getById(userId);
+        if (user == null) return false;
+        if (nickname != null) {
+            String value = nickname.trim();
+            if (value.length() > 32) throw new IllegalArgumentException("昵称不能超过32个字符");
+            user.setNickname(value.isEmpty() ? user.getUsername() : value);
+        }
+        if (email != null) user.setEmail(email.trim());
+        if (phone != null) user.setPhone(phone.trim());
+        return updateById(user);
+    }
+
+    @Override
+    public boolean updateAvatar(Long userId, String avatarUrl) {
+        User user = getById(userId);
+        if (user == null) return false;
+        user.setAvatar(avatarUrl);
+        return updateById(user);
+    }
 }

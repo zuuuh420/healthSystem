@@ -39,4 +39,24 @@ class UserInviteCodeTest {
         User saved = userService.findByUsername(USERNAME);
         assertThat(saved.getInviteCode()).matches("ZH[A-Z0-9]{10}");
     }
+
+    @Test
+    void profileUpdateKeepsUsernameAndInviteCodeImmutable() {
+        User user = new User();
+        user.setUsername(USERNAME);
+        user.setPassword("password123");
+        user.setNickname("原始昵称");
+        assertThat(userService.register(user)).isTrue();
+
+        User saved = userService.findByUsername(USERNAME);
+        String inviteCode = saved.getInviteCode();
+        assertThat(userService.updateProfile(saved.getId(), "新的昵称", "new@example.com", "13800000000")).isTrue();
+
+        User updated = userService.getById(saved.getId());
+        assertThat(updated.getUsername()).isEqualTo(USERNAME);
+        assertThat(updated.getInviteCode()).isEqualTo(inviteCode);
+        assertThat(updated.getNickname()).isEqualTo("新的昵称");
+        assertThat(updated.getEmail()).isEqualTo("new@example.com");
+        assertThat(updated.getPhone()).isEqualTo("13800000000");
+    }
 }

@@ -1,12 +1,14 @@
-import { FamilyMember } from '../types'
+import { FamilyMember, FamilyRelationRequest } from '../types'
 
 type ApiResult<T> = { code: number; msg?: string; data?: T }
 type RelationView = {
   id: number
   memberUserId: number
   memberNickname: string
+  memberOriginalNickname?: string
+  memberInviteCode?: string
   relationship: string
-  status: 'ACTIVE' | 'REVOKED'
+  status: 'PENDING' | 'ACTIVE' | 'REJECTED' | 'REVOKED'
   createdAt?: string
   updatedAt?: string
 }
@@ -14,6 +16,8 @@ type SnapshotView = {
   relationId: number
   memberUserId: number
   memberNickname: string
+  memberOriginalNickname?: string
+  memberInviteCode?: string
   relationship: string
   deviceName: string
   deviceOnline: boolean
@@ -46,8 +50,11 @@ function toMember(relation: RelationView): FamilyMember {
   const name = relation.memberNickname || '已关联家人'
   return {
     id: `family-user-${relation.memberUserId}`,
+    relationId: relation.id,
     name,
-    relationship: relation.relationship,
+    originalName: relation.memberOriginalNickname || name,
+    identityCode: relation.memberInviteCode,
+    relationship: relation.relationship || '',
     initials: name.slice(0, 1),
     linkedAt: relation.createdAt?.slice(0, 10) ?? '',
     deviceName: '知衡 Band 2',
@@ -71,8 +78,11 @@ function toSnapshotMember(snapshot: SnapshotView): FamilyMember {
     && snapshot.steps !== null
   return {
     id: `family-user-${snapshot.memberUserId}`,
+    relationId: snapshot.relationId,
     name,
-    relationship: snapshot.relationship,
+    originalName: snapshot.memberOriginalNickname || name,
+    identityCode: snapshot.memberInviteCode,
+    relationship: snapshot.relationship || '',
     initials: name.slice(0, 1),
     linkedAt: '',
     deviceName: snapshot.deviceName,
@@ -100,12 +110,11 @@ export async function loadFamilyRelations() {
   return { inviteCode: inviteCode.inviteCode, members: relations.filter(item => item.status === 'ACTIVE').map(toMember) }
 }
 
-export async function createFamilyRelation(inviteCode: string, relationship = '家人') {
-  const relation = await request<RelationView>('/family/relations', {
+export async function createFamilyRelation(inviteCode: string, relationship = '') {
+  return request<RelationView>('/family/relations', {
     method: 'POST',
     body: JSON.stringify({ inviteCode, relationship })
   })
-  return toMember(relation)
 }
 
 export async function loadFamilyHealthSnapshots() {
@@ -113,4 +122,28 @@ export async function loadFamilyHealthSnapshots() {
   if (!token) return null
   const snapshots = await request<SnapshotView[]>('/family/health-snapshots')
   return snapshots.map(toSnapshotMember)
+}
+
+export async function loadFamilyRequests() {
+  const token = window.localStorage.getItem('token') ?? window.localStorage.getItem('accessToken')
+  if (!token) return null
+  return request<FamilyRelationRequest[]>('/family/requests')
+}
+
+export async function decideFamilyRequest(id: number, decision: 'ACCEPT' | 'REJECT', relationship = '') {
+  return request<null>(`/family/requests/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ decision, relationship })
+  })
+}
+
+export async function updateFamilyRelation(relationId: number, displayName: string | undefined, relationship?: string) {
+  return request<null>(`/family/relations/${relationId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ ...(displayName !== undefined ? { displayName } : {}), ...(relationship !== undefined ? { relationship } : {}) })
+  })
+}
+
+export async function removeFamilyRelation(relationId: number) {
+  return request<null>(`/family/relations/${relationId}`, { method: 'DELETE' })
 }

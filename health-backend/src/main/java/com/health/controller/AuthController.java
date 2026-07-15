@@ -3,9 +3,13 @@ package com.health.controller;
 import com.health.common.JwtUtil;
 import com.health.common.Result;
 import com.health.entity.User;
+import com.health.common.SecurityUtil;
+import com.health.dto.UserProfileUpdateRequest;
+import com.health.service.AvatarStorageService;
 import com.health.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import java.util.HashMap;
@@ -23,6 +27,9 @@ public class AuthController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private AvatarStorageService avatarStorageService;
 
     /**
      * 用户注册
@@ -63,6 +70,8 @@ public class AuthController {
             userInfo.put("email", user.getEmail());
             userInfo.put("avatar", user.getAvatar());
             userInfo.put("role", user.getRole());
+            userInfo.put("inviteCode", user.getInviteCode());
+            userInfo.put("createTime", user.getCreateTime());
             data.put("userInfo", userInfo);
 
             return Result.success("登录成功", data);
@@ -92,11 +101,56 @@ public class AuthController {
             userInfo.put("phone", user.getPhone());
             userInfo.put("avatar", user.getAvatar());
             userInfo.put("role", user.getRole());
+            userInfo.put("inviteCode", user.getInviteCode());
+            userInfo.put("createTime", user.getCreateTime());
 
             return Result.success(userInfo);
         } catch (Exception e) {
             return Result.error(401, "Token无效");
         }
+    }
+
+    @PutMapping("/profile")
+    public Result<Map<String, Object>> updateProfile(@RequestBody UserProfileUpdateRequest request) {
+        try {
+            Long userId = SecurityUtil.getCurrentUserId();
+            if (userId == null) return Result.error(401, "请先登录");
+            if (!userService.updateProfile(userId, request.getNickname(), request.getEmail(), request.getPhone())) {
+                return Result.error(400, "资料更新失败");
+            }
+            return Result.success("资料已更新", profileView(userService.getById(userId)));
+        } catch (RuntimeException exception) {
+            return Result.error(400, exception.getMessage());
+        }
+    }
+
+    @PostMapping("/avatar")
+    public Result<Map<String, Object>> uploadAvatar(@RequestPart("file") MultipartFile file) {
+        try {
+            Long userId = SecurityUtil.getCurrentUserId();
+            if (userId == null) return Result.error(401, "请先登录");
+            String avatarUrl = avatarStorageService.store(file);
+            if (!userService.updateAvatar(userId, avatarUrl)) return Result.error(400, "头像更新失败");
+            Map<String, Object> data = new HashMap<>();
+            data.put("avatar", avatarUrl);
+            return Result.success("头像已更新", data);
+        } catch (RuntimeException exception) {
+            return Result.error(400, exception.getMessage());
+        }
+    }
+
+    private Map<String, Object> profileView(User user) {
+        Map<String, Object> view = new HashMap<>();
+        view.put("id", user.getId());
+        view.put("username", user.getUsername());
+        view.put("nickname", user.getNickname());
+        view.put("email", user.getEmail());
+        view.put("phone", user.getPhone());
+        view.put("avatar", user.getAvatar());
+        view.put("role", user.getRole());
+        view.put("inviteCode", user.getInviteCode());
+        view.put("createTime", user.getCreateTime());
+        return view;
     }
 
     /**

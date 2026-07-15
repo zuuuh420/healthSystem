@@ -38,3 +38,11 @@ logging:
   level:
     com.health: debug
     org.springframework.security: debug
+
+zhipu:
+  api-key: ${ZHIPU_API_KEY:}
+  base-url: ${ZHIPU_BASE_URL:https://open.bigmodel.cn/api/paas/v4/chat/completions}
+  model: ${ZHIPU_MODEL:glm-4-flash}
+
+app:
+  avatar-dir: ${AVATAR_DIR:uploads/avatars}

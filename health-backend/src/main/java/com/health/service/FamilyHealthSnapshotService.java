@@ -9,6 +9,7 @@ import com.health.mapper.FamilyRelationMapper;
 import com.health.mapper.UserMapper;
 import com.health.vo.FamilyHealthSnapshotVO;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -50,7 +51,10 @@ public class FamilyHealthSnapshotService {
         view.setMemberUserId(relation.getMemberUserId());
         view.setRelationship(relation.getRelationship());
         User member = userMapper.selectById(relation.getMemberUserId());
-        view.setMemberNickname(member == null ? "已关联家人" : displayName(member));
+        String originalName = member == null ? "已关联家人" : displayName(member);
+        view.setMemberOriginalNickname(originalName);
+        view.setMemberInviteCode(member == null ? null : member.getInviteCode());
+        view.setMemberNickname(StringUtils.hasText(relation.getDisplayName()) ? relation.getDisplayName() : originalName);
         if (snapshot == null) {
             view.setDeviceName("知衡 Band 2");
             view.setDeviceOnline(false);

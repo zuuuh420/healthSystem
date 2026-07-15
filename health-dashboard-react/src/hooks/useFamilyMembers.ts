@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react'
-import { FamilyMember } from '../types'
-import { createFamilyRelation, loadFamilyHealthSnapshots, loadFamilyRelations } from '../services/familyRelations'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { FamilyHealthAlert, FamilyMember, FamilyRelationRequest } from '../types'
+import { createFamilyRelation, decideFamilyRequest, loadFamilyHealthSnapshots, loadFamilyRelations, loadFamilyRequests, removeFamilyRelation, updateFamilyRelation } from '../services/familyRelations'
+import { advanceHealthStatus, HealthTracker } from '../services/healthStatus'
 
 const DEMO_INVITE_CODE = 'FAMILY-2026'
 
 const seedMembers: FamilyMember[] = [
   {
-    id: 'family-dad', name: '爸爸', relationship: '父亲', initials: '爸', linkedAt: '2026-07-12',
+    id: 'family-dad', identityCode: 'ZH-DEMO-DAD', name: '爸爸', relationship: '父亲', initials: '爸', linkedAt: '2026-07-12',
     deviceName: '知衡 Band 2', deviceOnline: true, wearing: true,
     vitals: { heartRate: 72, oxygen: 98, temperature: 36.6, sleep: '7小时18分', steps: 6842 }, history: [
       { date: '7/08', heartRate: 70, oxygen: 98, sleep: 7.1 }, { date: '7/09', heartRate: 73, oxygen: 98, sleep: 6.8 },
@@ -16,7 +17,7 @@ const seedMembers: FamilyMember[] = [
     ], lastSyncAt: '刚刚'
   },
   {
-    id: 'family-mom', name: '妈妈', relationship: '母亲', initials: '妈', linkedAt: '2026-07-10',
+    id: 'family-mom', identityCode: 'ZH-DEMO-MOM', name: '妈妈', relationship: '母亲', initials: '妈', linkedAt: '2026-07-10',
     deviceName: '知衡 Band 2', deviceOnline: true, wearing: false,
     vitals: null, history: [], lastSyncAt: '12分钟前'
   }
@@ -28,6 +29,27 @@ export function useFamilyMembers() {
   const [members, setMembers] = useState<FamilyMember[]>(seedMembers)
   const [message, setMessage] = useState('')
   const [inviteCode, setInviteCode] = useState<string | null>(null)
+  const [pendingRequests, setPendingRequests] = useState<FamilyRelationRequest[]>([])
+  const [healthAlerts, setHealthAlerts] = useState<FamilyHealthAlert[]>([])
+  const trackers = useRef<Record<string, HealthTracker>>({})
+
+  const applyHealthStatus = useCallback((nextMembers: FamilyMember[]) => nextMembers.map(member => {
+    const result = advanceHealthStatus(member.deviceOnline, member.wearing, member.vitals, trackers.current[member.id])
+    trackers.current[member.id] = result.tracker
+    const alert = result.alert
+    if (result.shouldNotify && alert) setHealthAlerts(existing => [...existing, { ...alert, id: `${member.id}-${alert.metric}-${result.tracker.notifiedAt}`, memberId: member.id, memberName: member.name, createdAt: alert.confirmedAt ?? new Date().toISOString() }])
+    return { ...member, healthStatus: result.status, healthAlert: result.alert, healthAlertHistory: result.tracker.alertHistory }
+  }), [])
+
+  const refreshFamilyData = useCallback(async () => {
+    const snapshot = await loadFamilyRelations()
+    if (!snapshot) return null
+    const [remoteMembers, requests] = await Promise.all([loadFamilyHealthSnapshots(), loadFamilyRequests()])
+    setInviteCode(snapshot.inviteCode)
+    setMembers(applyHealthStatus(remoteMembers ?? snapshot.members))
+    setPendingRequests(requests ?? [])
+    return true
+  }, [])
 
   useEffect(() => {
     let timer: number | undefined
@@ -53,28 +75,25 @@ export function useFamilyMembers() {
         }
       }))
     }
-    const refreshRemoteSnapshots = () => {
+    const refreshRemoteData = () => {
       if (!active || !remoteMode || document.visibilityState === 'hidden') return
-      void loadFamilyHealthSnapshots().then(remoteMembers => {
-        if (remoteMembers) setMembers(remoteMembers)
+      void Promise.all([loadFamilyHealthSnapshots(), loadFamilyRequests()]).then(([remoteMembers, requests]) => {
+        if (remoteMembers) setMembers(applyHealthStatus(remoteMembers))
+        if (requests) setPendingRequests(requests)
       }).catch(() => setMessage('家人设备数据暂时无法更新。'))
     }
     const resume = () => {
       clearTimer()
       clearSnapshotTimer()
       if (document.visibilityState !== 'visible') return
-      if (remoteMode) snapshotTimer = window.setInterval(refreshRemoteSnapshots, 5000)
+      if (remoteMode) snapshotTimer = window.setInterval(refreshRemoteData, 5000)
       else timer = window.setInterval(update, 5000)
     }
     resume()
-    void loadFamilyRelations().then(snapshot => {
-      if (!snapshot) return
+    void refreshFamilyData().then(remote => {
+      if (!remote) return
       remoteMode = true
-      setInviteCode(snapshot.inviteCode)
-      return loadFamilyHealthSnapshots().then(remoteMembers => {
-        setMembers(remoteMembers ?? snapshot.members)
-        resume()
-      })
+      resume()
     }).catch(() => {
       remoteMode = false
       resume()
@@ -82,7 +101,7 @@ export function useFamilyMembers() {
     })
     const handleVisibilityChange = () => {
       resume()
-      if (document.visibilityState === 'visible') refreshRemoteSnapshots()
+      if (document.visibilityState === 'visible') refreshRemoteData()
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => { active = false; clearTimer(); clearSnapshotTimer(); document.removeEventListener('visibilitychange', handleVisibilityChange) }
@@ -91,9 +110,8 @@ export function useFamilyMembers() {
   const addByInviteCode = async (code: string) => {
     if (inviteCode) {
       try {
-        const member = await createFamilyRelation(code)
-        setMembers(current => current.some(item => item.id === member.id) ? current : [...current, member])
-        setMessage(`关联成功，已添加${member.name}。`)
+        await createFamilyRelation(code)
+        setMessage('申请已发送，等待对方确认。')
         return true
       } catch (error) {
         setMessage(error instanceof Error ? error.message : '关联失败，请稍后重试。')
@@ -109,12 +127,72 @@ export function useFamilyMembers() {
       return false
     }
     setMembers(current => [...current, {
-      id: 'family-grandma', name: '奶奶', relationship: '祖辈', initials: '奶', linkedAt: '2026-07-14',
+      id: 'family-grandma', identityCode: 'ZH-DEMO-GMA', name: '奶奶', relationship: '祖辈', initials: '奶', linkedAt: '2026-07-14',
       deviceName: '知衡 Band 2', deviceOnline: false, wearing: false, vitals: null, history: [], lastSyncAt: '尚未同步'
     }])
     setMessage('关联成功，已添加奶奶。')
     return true
   }
 
-  return { members, message, addByInviteCode, inviteCode, demoInviteCode: DEMO_INVITE_CODE }
+  const decideRequest = async (id: number, decision: 'ACCEPT' | 'REJECT', relationship = '') => {
+    try {
+      await decideFamilyRequest(id, decision, relationship)
+      setPendingRequests(current => current.filter(request => request.id !== id))
+      if (decision === 'ACCEPT') await refreshFamilyData()
+      setMessage(decision === 'ACCEPT' ? '关联申请已接受。' : '关联申请已拒绝。')
+      return true
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '申请处理失败，请稍后重试。')
+      return false
+    }
+  }
+
+  const updateRelationship = async (memberId: string, relationship: string) => {
+    const member = members.find(item => item.id === memberId)
+    if (!member?.relationId) return false
+    try {
+      await updateFamilyRelation(member.relationId, undefined, relationship.trim())
+      setMembers(current => current.map(item => item.id === memberId ? { ...item, relationship: relationship.trim() } : item))
+      return true
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '关系称谓保存失败，请稍后重试。')
+      return false
+    }
+  }
+
+  const renameMember = async (memberId: string, displayName: string) => {
+    const member = members.find(item => item.id === memberId)
+    if (!member) return false
+    const nextName = displayName.trim()
+    if (member.relationId) {
+      try {
+        await updateFamilyRelation(member.relationId, nextName)
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : '备注名保存失败，请稍后重试。')
+        return false
+      }
+    }
+    setMembers(current => current.map(item => item.id === memberId ? { ...item, name: nextName || item.originalName || item.name, initials: (nextName || item.originalName || item.name).slice(0, 1) } : item))
+    return true
+  }
+
+  const removeMember = async (memberId: string) => {
+    const member = members.find(item => item.id === memberId)
+    if (!member) return false
+    if (member.relationId) {
+      try {
+        await removeFamilyRelation(member.relationId)
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : '解除关联失败，请稍后重试。')
+        return false
+      }
+    }
+    setMembers(current => current.filter(item => item.id !== memberId))
+    setMessage(`已解除与${member.name}的关联。`)
+    return true
+  }
+
+  const dismissHealthAlert = (id: string) => setHealthAlerts(current => current.filter(alert => alert.id !== id))
+
+  return { members, message, addByInviteCode, inviteCode, demoInviteCode: DEMO_INVITE_CODE, pendingRequests, healthAlerts, dismissHealthAlert, decideRequest, refreshFamilyData, renameMember, updateRelationship, removeMember }
 }

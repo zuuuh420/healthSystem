@@ -9,6 +9,8 @@ public class FamilyHealthSnapshotVO {
     private Long relationId;
     private Long memberUserId;
     private String memberNickname;
+    private String memberOriginalNickname;
+    private String memberInviteCode;
     private String relationship;
     private String deviceName;
     private Boolean deviceOnline;

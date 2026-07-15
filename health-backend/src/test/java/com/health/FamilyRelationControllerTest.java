@@ -38,6 +38,8 @@ class FamilyRelationControllerTest {
     void cleanUp() {
         mapper.delete(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.health.entity.FamilyRelation>()
                 .eq("owner_user_id", 2L).eq("member_user_id", 3L));
+        mapper.delete(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.health.entity.FamilyRelation>()
+                .eq("owner_user_id", 3L).eq("member_user_id", 2L));
         SecurityContextHolder.clearContext();
     }
 
@@ -76,6 +78,7 @@ class FamilyRelationControllerTest {
         assertThat(result.getCode()).isEqualTo(200);
         assertThat(result.getData().getMemberUserId()).isEqualTo(3L);
         assertThat(result.getData().getRelationship()).isEqualTo("父亲");
+        assertThat(result.getData().getStatus()).isEqualTo("PENDING");
     }
 
     @Test
