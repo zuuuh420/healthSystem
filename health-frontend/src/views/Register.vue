@@ -1,186 +1,274 @@
 <template>
-  <div class="register-container">
-    <div class="register-card">
-      <h2 class="register-title">注册账号</h2>
-      <el-form ref="form" :model="form" :rules="rules" class="register-form">
-        <el-form-item prop="username">
-          <el-input
-            v-model="form.username"
-            prefix-icon="el-icon-user"
-            placeholder="请输入用户名"
-            size="large"
-          />
-        </el-form-item>
-        <el-form-item prop="nickname">
-          <el-input
-            v-model="form.nickname"
-            prefix-icon="el-icon-user-solid"
-            placeholder="请输入昵称"
-            size="large"
-          />
-        </el-form-item>
-        <el-form-item prop="email">
-          <el-input
-            v-model="form.email"
-            prefix-icon="el-icon-message"
-            placeholder="请输入邮箱"
-            size="large"
-          />
-        </el-form-item>
-        <el-form-item prop="password">
-          <el-input
-            v-model="form.password"
-            prefix-icon="el-icon-lock"
-            placeholder="请输入密码"
-            type="password"
-            size="large"
-            show-password
-          />
-        </el-form-item>
-        <el-form-item prop="confirmPassword">
-          <el-input
-            v-model="form.confirmPassword"
-            prefix-icon="el-icon-lock"
-            placeholder="请确认密码"
-            type="password"
-            size="large"
-            show-password
-          />
-        </el-form-item>
-        <el-form-item>
+  <main class="register-page">
+    <section class="visual-side">
+      <div class="visual-image" />
+      <router-link class="brand" to="/login"
+        ><i class="el-icon-data-analysis" /> 知衡</router-link
+      >
+      <div class="visual-copy">
+        <span>BEGIN YOUR TRACE</span>
+        <h1>让今天的记录，<br />成为明天的依据。</h1>
+        <p>建立个人账户，持续整理身体指标、运动与饮食变化。</p>
+      </div>
+    </section>
+    <section class="form-side">
+      <router-link class="back-link" to="/login"
+        ><i class="el-icon-back" /> 返回首页</router-link
+      >
+      <div class="form-wrap">
+        <span class="eyebrow">CREATE ACCOUNT</span>
+        <h2>创建你的健康档案</h2>
+        <p class="intro">只需要基础信息，稍后可以继续完善个人资料。</p>
+        <el-form ref="form" :model="form" :rules="rules" label-position="top">
+          <div class="field-grid">
+            <el-form-item label="用户名" prop="username"
+              ><el-input
+                v-model="form.username"
+                placeholder="3-20个字符" /></el-form-item
+            ><el-form-item label="昵称" prop="nickname"
+              ><el-input v-model="form.nickname" placeholder="怎么称呼你"
+            /></el-form-item>
+          </div>
+          <el-form-item label="邮箱" prop="email"
+            ><el-input v-model="form.email" placeholder="name@example.com"
+          /></el-form-item>
+          <div class="field-grid">
+            <el-form-item label="密码" prop="password"
+              ><el-input
+                v-model="form.password"
+                type="password"
+                show-password
+                placeholder="至少6位" /></el-form-item
+            ><el-form-item label="确认密码" prop="confirmPassword"
+              ><el-input
+                v-model="form.confirmPassword"
+                type="password"
+                show-password
+                placeholder="再次输入"
+                @keyup.enter.native="handleRegister"
+            /></el-form-item>
+          </div>
           <el-button
-            type="primary"
-            size="large"
+            class="register-button"
             :loading="loading"
             @click="handleRegister"
-            class="register-btn"
-          >
-            注册
-          </el-button>
-        </el-form-item>
-        <div class="register-footer">
-          <span>已有账号？</span>
-          <router-link to="/login">立即登录</router-link>
-        </div>
-      </el-form>
-    </div>
-  </div>
+            >创建账户 <i class="el-icon-right"
+          /></el-button>
+        </el-form>
+        <p class="login-tip">
+          已有账户？<router-link to="/login">返回登录</router-link>
+        </p>
+      </div>
+    </section>
+  </main>
 </template>
-
 <script>
-import { register } from '@/api/auth'
-
+import { register } from "@/api/auth";
 export default {
-  name: 'Register',
+  name: "Register",
   data() {
-    // 确认密码校验
-    const validateConfirmPassword = (rule, value, callback) => {
-      if (value !== this.form.password) {
-        callback(new Error('两次输入的密码不一致'))
-      } else {
-        callback()
-      }
-    }
-
+    const confirm = (r, v, c) =>
+      v !== this.form.password ? c(new Error("两次输入的密码不一致")) : c();
     return {
       loading: false,
       form: {
-        username: '',
-        nickname: '',
-        email: '',
-        password: '',
-        confirmPassword: ''
+        username: "",
+        nickname: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
       },
       rules: {
         username: [
-          { required: true, message: '请输入用户名', trigger: 'blur' },
-          { min: 3, max: 20, message: '用户名长度在 3 到 20 个字符', trigger: 'blur' }
+          { required: true, message: "请输入用户名", trigger: "blur" },
+          { min: 3, max: 20, message: "长度为3到20个字符", trigger: "blur" },
         ],
-        nickname: [
-          { required: true, message: '请输入昵称', trigger: 'blur' }
-        ],
+        nickname: [{ required: true, message: "请输入昵称", trigger: "blur" }],
         email: [
-          { required: true, message: '请输入邮箱', trigger: 'blur' },
-          { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+          { required: true, message: "请输入邮箱", trigger: "blur" },
+          { type: "email", message: "邮箱格式不正确", trigger: "blur" },
         ],
         password: [
-          { required: true, message: '请输入密码', trigger: 'blur' },
-          { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+          { required: true, message: "请输入密码", trigger: "blur" },
+          { min: 6, message: "密码不能少于6位", trigger: "blur" },
         ],
         confirmPassword: [
-          { required: true, message: '请确认密码', trigger: 'blur' },
-          { validator: validateConfirmPassword, trigger: 'blur' }
-        ]
-      }
-    }
+          { required: true, message: "请确认密码", trigger: "blur" },
+          { validator: confirm, trigger: "blur" },
+        ],
+      },
+    };
   },
   methods: {
     handleRegister() {
       this.$refs.form.validate(async (valid) => {
-        if (valid) {
-          this.loading = true
-          try {
-            const { confirmPassword, ...data } = this.form
-            const res = await register(data)
-            if (res.code === 200) {
-              this.$message.success('注册成功，请登录')
-              this.$router.push('/login')
-            } else {
-              this.$message.error(res.msg || '注册失败')
-            }
-          } catch (error) {
-            this.$message.error('注册失败')
-          } finally {
-            this.loading = false
-          }
+        if (!valid) return;
+        this.loading = true;
+        try {
+          const { confirmPassword, ...data } = this.form;
+          await register(data);
+          this.$message.success("账户创建成功，请登录");
+          this.$router.push("/login");
+        } catch (e) {
+        } finally {
+          this.loading = false;
         }
-      })
-    }
-  }
-}
+      });
+    },
+  },
+};
 </script>
-
 <style scoped>
-.register-container {
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@500;600&display=swap");
+.register-page {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: grid;
+  grid-template-columns: 44% 56%;
+  font-family: Inter, "Microsoft YaHei", sans-serif;
+  background: #f6f4ef;
 }
-
-.register-card {
-  width: 400px;
-  padding: 40px;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+.visual-side {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #050706;
+  color: #fff;
 }
-
-.register-title {
-  text-align: center;
-  margin-bottom: 30px;
-  color: #303133;
-  font-size: 28px;
+.visual-image {
+  position: absolute;
+  inset: 0;
+  background: url("../assets/health-hero-reveal.webp") center/cover no-repeat;
+  opacity: 0.78;
 }
-
-.register-form {
-  width: 100%;
+.visual-side:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.72));
 }
-
-.register-btn {
-  width: 100%;
-}
-
-.register-footer {
-  text-align: center;
-  margin-top: 10px;
-  color: #909399;
-}
-
-.register-footer a {
-  color: #409EFF;
+.brand {
+  position: absolute;
+  z-index: 2;
+  top: 28px;
+  left: 32px;
+  color: #fff;
   text-decoration: none;
-  margin-left: 5px;
+  font-family: "Noto Serif SC", serif;
+  font-size: 23px;
+}
+.visual-copy {
+  position: absolute;
+  z-index: 2;
+  left: 44px;
+  right: 44px;
+  bottom: 48px;
+}
+.visual-copy span,
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #e58248;
+  font-weight: 700;
+}
+.visual-copy h1 {
+  font-family: "Noto Serif SC", serif;
+  font-size: 39px;
+  line-height: 1.35;
+  margin: 15px 0;
+}
+.visual-copy p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.7);
+}
+.form-side {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 70px;
+}
+.back-link {
+  position: absolute;
+  top: 28px;
+  right: 34px;
+  color: #616b65;
+  text-decoration: none;
+  font-size: 13px;
+}
+.form-wrap {
+  width: min(580px, 100%);
+}
+.form-wrap h2 {
+  font-family: "Noto Serif SC", serif;
+  font-size: 32px;
+  margin: 13px 0 8px;
+}
+.intro {
+  color: #7b837e;
+  margin-bottom: 32px;
+  font-size: 13px;
+}
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.form-wrap >>> .el-form-item__label {
+  font-weight: 600;
+  color: #303a34;
+}
+.form-wrap >>> .el-input__inner {
+  height: 47px;
+  border: 1px solid #d2d6d1;
+  border-radius: 0;
+  background: transparent;
+}
+.register-button {
+  width: 100%;
+  height: 50px;
+  border: 0;
+  border-radius: 0;
+  background: #173f31;
+  color: #fff;
+  font-weight: 700;
+  margin-top: 8px;
+}
+.login-tip {
+  text-align: center;
+  margin-top: 22px;
+  color: #7d847f;
+  font-size: 13px;
+}
+.login-tip a {
+  color: #a95025;
+  font-weight: 700;
+  text-decoration: none;
+  margin-left: 6px;
+}
+@media (max-width: 780px) {
+  .register-page {
+    display: block;
+  }
+  .visual-side {
+    min-height: 260px;
+  }
+  .visual-copy {
+    left: 24px;
+    bottom: 24px;
+  }
+  .visual-copy h1 {
+    font-size: 30px;
+  }
+  .form-side {
+    padding: 60px 24px;
+  }
+  .back-link {
+    top: 20px;
+    right: 22px;
+  }
+  .field-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
 }
 </style>

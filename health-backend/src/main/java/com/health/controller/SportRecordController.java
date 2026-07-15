@@ -8,6 +8,7 @@ import com.health.entity.SportRecord;
 import com.health.service.SportRecordService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -30,8 +31,8 @@ public class SportRecordController {
     public Result<IPage<SportRecord>> getSportRecords(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
-            @RequestParam(required = false) LocalDate startDate,
-            @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) Long sportTypeId) {
         Long userId = SecurityUtil.getCurrentUserId();
         IPage<SportRecord> page = sportRecordService.getSportRecords(userId, pageNum, pageSize, startDate, endDate, sportTypeId);

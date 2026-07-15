@@ -27,4 +27,8 @@ public interface UserService extends IService<User> {
      * 修改密码
      */
     boolean changePassword(Long userId, String oldPassword, String newPassword);
+
+    boolean updateProfile(Long userId, String nickname, String email, String phone);
+
+    boolean updateAvatar(Long userId, String avatarUrl);
 }

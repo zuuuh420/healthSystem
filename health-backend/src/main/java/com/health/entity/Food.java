@@ -12,9 +12,13 @@ public class Food {
 
     private String name;
     private String category;
+    @TableField("calories_per_100g")
     private Double caloriesPer100g;
+    @TableField("protein_per_100g")
     private Double proteinPer100g;
+    @TableField("fat_per_100g")
     private Double fatPer100g;
+    @TableField("carbs_per_100g")
     private Double carbsPer100g;
     private String unit;
     private String imageUrl;

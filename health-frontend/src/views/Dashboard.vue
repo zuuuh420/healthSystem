@@ -1,269 +1,97 @@
 <template>
-  <div class="dashboard">
-    <h2 class="page-title">首页仪表盘</h2>
+  <section class="dashboard" v-loading="loading">
+    <header class="welcome">
+      <div>
+        <span class="date-note">{{ fullDate }}</span>
+        <h1>{{ greeting }}，{{ displayName }}</h1>
+        <p>手环正在把今天的身体信号，整理成可以行动的建议。</p>
+      </div>
+      <div class="welcome-actions">
+        <span class="current-account"><i class="el-icon-user" />{{ displayName }}</span>
+        <el-button class="sync-button" icon="el-icon-refresh" :loading="syncing" @click="syncDevice">同步设备</el-button>
+      </div>
+    </header>
 
-    <!-- 统计卡片 -->
-    <el-row :gutter="20" class="stat-cards">
-      <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #409EFF, #66b1ff)">
-            <i class="el-icon-basketball"></i>
-          </div>
-          <div class="stat-info">
-            <div class="stat-value">{{ weeklyStats.totalMinutes || 0 }}</div>
-            <div class="stat-label">本周运动(分钟)</div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #F56C6C, #f89898)">
-            <i class="el-icon-fire"></i>
-          </div>
-          <div class="stat-info">
-            <div class="stat-value">{{ weeklyStats.totalCalories || 0 }}</div>
-            <div class="stat-label">消耗卡路里</div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #67C23A, #85ce61)">
-            <i class="el-icon-check"></i>
-          </div>
-          <div class="stat-info">
-            <div class="stat-value">{{ streakData.currentStreak || 0 }}</div>
-            <div class="stat-label">连续打卡(天)</div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #E6A23C, #ebb563)">
-            <i class="el-icon-aim"></i>
-          </div>
-          <div class="stat-info">
-            <div class="stat-value">{{ activeGoals }}</div>
-            <div class="stat-label">进行中目标</div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+    <section class="device-hub">
+      <article class="body-scan" :class="{ 'is-off': !device.worn }">
+        <div class="scan-heading"><div><span class="eyebrow">BODY SCAN</span><h2>身体状态</h2></div><span class="connection-pill"><i :class="device.worn ? 'el-icon-success' : 'el-icon-warning-outline'" />{{ device.worn ? '实时采集' : '等待佩戴' }}</span></div>
+        <div class="scan-stage">
+          <div class="body-figure" aria-label="身体信号扫描示意图"><img src="@/assets/body-scan-transparent.png" alt="身体信号扫描" /><span class="scan-ring ring-one" /><span class="scan-ring ring-two" /></div>
+          <div class="scan-metrics"><div v-for="signal in keySignals" :key="signal.key" class="scan-metric"><span class="signal-icon" :class="signal.tone"><i :class="signal.icon" /></span><div><small>{{ signal.label }}</small><strong>{{ signal.value }}<em>{{ signal.unit }}</em></strong></div><i class="el-icon-right" /></div></div>
+        </div>
+      </article>
+      <article class="product-card">
+        <div class="product-image"><div class="product-glow" /><img src="@/assets/wristband-transparent.png" alt="知衡健康智能手环" /><span class="product-status" :class="{ off: !device.worn }"><i :class="device.worn ? 'el-icon-success' : 'el-icon-warning-outline'" />佩戴状态：{{ device.worn ? '已佩戴' : '未佩戴' }}</span></div>
+        <div class="product-info"><span class="eyebrow">CONNECTED PRODUCT</span><h2>{{ device.device }}</h2><p>佩戴即测，多维数据监控</p><div class="device-meta"><span><i class="el-icon-time" />{{ device.lastSync }}</span><span><i class="el-icon-battery" />{{ device.battery }}%</span><button type="button" @click="showDeviceInfo">详情 <i class="el-icon-right" /></button></div></div>
+      </article>
+    </section>
 
-    <!-- 图表区域 -->
-    <el-row :gutter="20">
-      <el-col :span="16">
-        <el-card>
-          <template #header>
-            <span>近7天运动趋势</span>
-          </template>
-          <div ref="trendChart" class="chart-container"></div>
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card>
-          <template #header>
-            <span>今日运动</span>
-          </template>
-          <div v-if="todayRecords.length > 0" class="today-list">
-            <div v-for="record in todayRecords" :key="record.id" class="today-item">
-              <span class="sport-name">{{ record.sportTypeName }}</span>
-              <span class="sport-duration">{{ record.durationMinutes }}分钟</span>
-            </div>
-          </div>
-          <el-empty v-else description="今日暂无运动记录" />
-        </el-card>
-      </el-col>
-    </el-row>
-  </div>
+    <div class="dashboard-grid">
+      <section class="trend-panel"><header class="section-heading"><div><span class="eyebrow">LAST 7 DAYS</span><h2>近7天趋势</h2></div><span class="range-pill">近7天 <i class="el-icon-arrow-down" /></span></header><div class="chart-legend"><span><i class="steps-dot" />步数</span><span><i class="calorie-dot" />消耗</span><span><i class="goal-dot" />目标完成率</span></div><div ref="trendChart" class="trend-chart" /></section>
+      <section class="suggestion-panel"><header class="section-heading"><div><span class="eyebrow">SUGGESTED ACTIONS</span><h2>建议行动</h2></div><router-link to="/analysis">查看更多</router-link></header><div class="suggestion-list"><button v-for="item in suggestedActions" :key="item.title" type="button" @click="$router.push(item.path)"><span><i :class="item.icon" /></span><div><strong>{{ item.title }}</strong><p>{{ item.description }}</p></div><i class="el-icon-arrow-right" /></button></div></section>
+    </div>
+  </section>
 </template>
 
 <script>
 import * as echarts from 'echarts'
-import { getWeeklyStats, getSportTrend, getTodayRecords } from '@/api/sport'
-import { getCheckinStreak } from '@/api/goal'
-import { getHealthGoals } from '@/api/goal'
+import { getDashboardOverview } from '@/api/dashboard'
+import { findWearableProfile } from '@/mock/wearable'
 
 export default {
   name: 'Dashboard',
-  data() {
-    return {
-      weeklyStats: {},
-      streakData: {},
-      activeGoals: 0,
-      todayRecords: [],
-      trendChart: null
-    }
+  data: () => ({ loading: false, syncing: false, overview: null, chart: null }),
+  computed: {
+    activeUser() { return this.$store.state.userInfo || {} },
+    displayName() { return this.device.name || this.activeUser.nickname || this.activeUser.username || '朋友' },
+    device() { return findWearableProfile(this.activeUser.username) },
+    greeting() { const hour = new Date().getHours(); return hour < 11 ? '早上好' : hour < 18 ? '下午好' : '晚上好' },
+    fullDate() { return new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(new Date()) },
+    signals() {
+      const m = this.device.metrics
+      return [
+        { key: 'heart', label: '心率', value: m.heartRate || '--', unit: m.heartRate ? 'bpm' : '未检测', icon: 'el-icon-heart', tone: 'rose' },
+        { key: 'oxygen', label: '血氧饱和度', value: m.oxygen ? `${m.oxygen}%` : '--', unit: m.oxygen ? 'SpO₂' : '未检测', icon: 'el-icon-odometer', tone: 'mint' },
+        { key: 'temp', label: '体温趋势', value: m.temperature || '--', unit: m.temperature ? '°C' : '未检测', icon: 'el-icon-sunny', tone: 'amber' },
+        { key: 'sleep', label: '睡眠时长', value: m.sleep, unit: m.sleep !== '--' ? '昨夜' : '未检测', icon: 'el-icon-moon', tone: 'lilac' },
+        { key: 'pressure', label: '血压趋势', value: m.pressure, unit: m.pressure !== '--' ? 'mmHg' : '未检测', icon: 'el-icon-data-analysis', tone: 'blue' },
+        { key: 'bodyFat', label: '体脂率', value: m.bodyFat ? `${m.bodyFat}%` : '--', unit: m.bodyFat ? 'BF' : '未检测', icon: 'el-icon-user', tone: 'leaf' }
+      ]
+    },
+    keySignals() { return this.signals.slice(0, 4) },
+    progressRate() { return Math.min(100, Math.round((((this.overview && this.overview.weeklyMinutes) || 0) / 150) * 100)) },
+    recoveryScore() { return Math.min(98, Math.round((this.device.metrics.heartRate ? 82 : 0) + (this.device.metrics.sleep === '8小时06分' ? 12 : 5))) },
+    recoveryText() { if (!this.device.worn) return '手环重新佩戴后，这里会根据睡眠和心率变化更新。'; return this.recoveryScore > 85 ? '昨夜恢复充分，今天适合保持轻到中等强度活动。' : '今天建议降低强度，优先补足睡眠和水分。' },
+    nutritionTitle() { if (!this.device.worn) return '先让数据回来'; return this.device.metrics.steps > 9000 ? '今天需要补充能量' : '保持轻盈补给' },
+    nutritionAdvice() { if (!this.device.worn) return '佩戴手环后，会结合活动量与睡眠给出更贴近今天的建议。'; return this.device.metrics.steps > 9000 ? '运动量偏高，晚餐可优先选择蛋白质、粗粮和足量饮水。' : '当前活动量平稳，优先保证早餐蛋白质与全天蔬菜摄入。' },
+    weeklyText() { const minutes = (this.overview && this.overview.weeklyMinutes) || 0; return minutes >= 150 ? '本周基础运动量已完成，留出恢复时间。' : `距离本周建议运动量还差${150 - minutes}分钟，手环会自动记录下一次活动。` },
+    suggestedActions() { return [
+      { title: '保持运动习惯', description: '今日步数未达目标，建议继续保持活动。', icon: 'el-icon-sunny', path: '/sport/records' },
+      { title: '规律作息', description: '尽量在23:00前入睡，提升睡眠质量。', icon: 'el-icon-moon', path: '/report' },
+      { title: '补充水分', description: '今日饮水偏少，建议多喝水。', icon: 'el-icon-water-cup', path: '/diet' },
+      { title: '放松身心', description: '压力水平略高，尝试深呼吸或冥想。', icon: 'el-icon-cloudy', path: '/analysis' }
+    ] }
   },
-  created() {
-    this.loadData()
-  },
-  mounted() {
-    this.initChart()
-    window.addEventListener('resize', this.handleResize)
-  },
-  beforeDestroy() {
-    window.removeEventListener('resize', this.handleResize)
-    if (this.trendChart) {
-      this.trendChart.dispose()
-    }
-  },
+  created() { this.loadData() },
+  mounted() { window.addEventListener('resize', this.resizeChart) },
+  beforeDestroy() { window.removeEventListener('resize', this.resizeChart); if (this.chart) this.chart.dispose() },
   methods: {
-    async loadData() {
-      try {
-        await Promise.all([
-          this.loadWeeklyStats(),
-          this.loadStreak(),
-          this.loadActiveGoals(),
-          this.loadTodayRecords(),
-          this.loadTrend()
-        ])
-      } catch (error) {
-        console.error('加载数据失败', error)
-      }
-    },
-    async loadWeeklyStats() {
-      const res = await getWeeklyStats()
-      if (res.code === 200) {
-        this.weeklyStats = res.data
-      }
-    },
-    async loadStreak() {
-      const res = await getCheckinStreak()
-      if (res.code === 200) {
-        this.streakData = res.data
-      }
-    },
-    async loadActiveGoals() {
-      const res = await getHealthGoals({ status: 0, pageSize: 1 })
-      if (res.code === 200) {
-        this.activeGoals = res.data.total
-      }
-    },
-    async loadTodayRecords() {
-      const res = await getTodayRecords()
-      if (res.code === 200) {
-        this.todayRecords = res.data
-      }
-    },
-    async loadTrend() {
-      const res = await getSportTrend(7)
-      if (res.code === 200) {
-        this.updateChart(res.data.dailyStats || [])
-      }
-    },
-    initChart() {
-      this.trendChart = echarts.init(this.$refs.trendChart)
-    },
-    updateChart(data) {
-      if (!this.trendChart) return
-
-      const option = {
-        tooltip: { trigger: 'axis' },
-        xAxis: {
-          type: 'category',
-          data: data.map(item => item.date.slice(5))
-        },
-        yAxis: { type: 'value', name: '分钟' },
-        series: [{
-          data: data.map(item => item.minutes),
-          type: 'line',
-          smooth: true,
-          areaStyle: { opacity: 0.3 },
-          itemStyle: { color: '#409EFF' }
-        }]
-      }
-
-      this.trendChart.setOption(option)
-    },
-    handleResize() {
-      if (this.trendChart) {
-        this.trendChart.resize()
-      }
+    async loadData() { this.loading = true; try { const overviewRes = await getDashboardOverview(); this.overview = overviewRes.data; this.$nextTick(this.renderChart) } finally { this.loading = false } },
+    async syncDevice() { this.syncing = true; await new Promise(resolve => setTimeout(resolve, 650)); this.syncing = false; this.$message.success(this.device.worn ? '设备数据已同步' : '未检测到佩戴，请重新佩戴手环') },
+    showDeviceInfo() { this.$alert('这是演示设备状态。真实接入时，可在这里绑定蓝牙手环、查看固件和同步记录。', '设备详情', { confirmButtonText: '知道了' }) },
+    resizeChart() { if (this.chart) this.chart.resize() },
+    renderChart() {
+      if (!this.$refs.trendChart) return
+      this.chart = this.chart || echarts.init(this.$refs.trendChart)
+      this.chart.setOption({ animationDuration: 600, grid: { left: 45, right: 42, top: 30, bottom: 28 }, tooltip: { trigger: 'axis' }, xAxis: { type: 'category', data: ['5/14 周二','5/15 周三','5/16 周四','5/17 周五','5/18 周六','5/19 周日','5/20 周一'], axisLine: { lineStyle: { color: '#dce5da' } }, axisTick: { show: false }, axisLabel: { color: '#68756c', fontSize: 11 } }, yAxis: [{ type: 'value', min: 0, max: 12000, interval: 3000, splitLine: { lineStyle: { color: '#edf2eb' } }, axisLabel: { color: '#7e8b82', fontSize: 10 } }, { type: 'value', min: 0, max: 100, interval: 25, splitLine: { show: false }, axisLabel: { formatter: '{value}%', color: '#7e8b82', fontSize: 10 } }], series: [{ name: '步数', type: 'bar', barWidth: 18, data: [5600,5400,6400,7100,6600,6200,6800], itemStyle: { color: '#a8c9ad' } }, { name: '消耗', type: 'bar', barWidth: 18, data: [3700,3600,4200,5200,4700,4100,4300], itemStyle: { color: '#d4e5d3' } }, { name: '目标完成率', type: 'line', yAxisIndex: 1, smooth: true, symbolSize: 8, data: [68,72,85,92,78,65,88], lineStyle: { color: '#246247', width: 2 }, itemStyle: { color: '#246247' } }] })
     }
   }
 }
 </script>
 
 <style scoped>
-.dashboard {
-  padding: 20px;
-}
-
-.page-title {
-  margin-bottom: 20px;
-  color: #303133;
-}
-
-.stat-cards {
-  margin-bottom: 20px;
-}
-
-.stat-card {
-  display: flex;
-  align-items: center;
-  padding: 20px;
-}
-
-.stat-card .el-card__body {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 15px;
-}
-
-.stat-icon i {
-  font-size: 28px;
-  color: #fff;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: bold;
-  color: #303133;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #909399;
-  margin-top: 5px;
-}
-
-.chart-container {
-  height: 300px;
-}
-
-.today-list {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.today-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.today-item:last-child {
-  border-bottom: none;
-}
-
-.sport-name {
-  color: #303133;
-  font-weight: 500;
-}
-
-.sport-duration {
-  color: #909399;
-}
+.dashboard{max-width:1280px;margin:0 auto;color:#25342b}.welcome{display:flex;align-items:flex-end;justify-content:space-between;padding:8px 2px 28px}.date-note,.eyebrow{display:block;color:#6d8871;font-size:11px;font-weight:700;letter-spacing:1.6px}.welcome h1{margin:8px 0 7px;font-size:32px;font-weight:600}.welcome p{color:#68756c;font-size:14px}.welcome-actions{display:flex;align-items:center;gap:10px}.profile-switch{width:170px}.sync-button{height:38px;border:0;border-radius:20px;background:#3f5f4b;color:#fff}.device-hero{display:grid;grid-template-columns:1.2fr .8fr;min-height:270px;overflow:hidden;position:relative;border-radius:28px;background:linear-gradient(115deg,#0b3429,#3f5f4b);box-shadow:0 18px 46px rgba(63,95,75,.17);color:#fff}.device-hero.is-off{background:linear-gradient(115deg,#40524a,#718178)}.device-copy{position:relative;z-index:2;padding:38px 46px}.eyebrow-row{display:flex;align-items:center;gap:12px}.device-copy .eyebrow{color:#c8e1c3}.connection-pill{padding:6px 10px;border-radius:15px;background:rgba(220,235,221,.16);color:#e3f2df;font-size:12px}.connection-pill i{margin-right:5px;color:#a8c66c}.device-copy h2{margin:18px 0 10px;font-size:28px;font-weight:600}.device-copy>p{max-width:530px;color:#d5e6d5;line-height:1.7;font-size:14px}.device-meta{display:flex;gap:24px;align-items:center;margin-top:28px;color:#c7ddc6;font-size:12px}.device-meta i{margin-right:5px}.device-meta button{border:0;background:transparent;color:#e8f5e6;cursor:pointer}.device-visual{position:relative;display:flex;align-items:center;justify-content:center}.device-visual .visual-glow{position:absolute;width:230px;height:230px;border-radius:50%;background:rgba(168,198,108,.18);filter:blur(4px)}.device-visual img{position:relative;width:min(290px,82%);transform:rotate(-9deg);border-radius:24px;mix-blend-mode:screen;opacity:.98}.signal-section{margin-top:34px}.section-heading{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}.section-heading h2{margin-top:6px;font-size:21px;font-weight:600;color:#344c3d}.section-heading a{color:#6d8871;font-size:13px;text-decoration:none}.section-hint{color:#94a098;font-size:12px}.signal-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}.signal-card{min-height:146px;padding:17px 16px;border-radius:20px;background:#fcfbf7;box-shadow:0 10px 28px rgba(63,95,75,.06);transition:transform .2s,box-shadow .2s}.signal-card:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(63,95,75,.12)}.signal-card.muted{background:#f0f3ef;box-shadow:none}.signal-top{display:flex;align-items:center;gap:8px;color:#68756c;font-size:12px}.signal-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:11px}.signal-icon.rose,.signal-spark.rose i{color:#b7686f;background:#f6e4e4}.signal-icon.mint,.signal-spark.mint i{color:#4b8b73;background:#def0e6}.signal-icon.amber,.signal-spark.amber i{color:#a37a4c;background:#f5ead4}.signal-icon.lilac,.signal-spark.lilac i{color:#766f99;background:#eae7f4}.signal-icon.blue,.signal-spark.blue i{color:#5d7fa0;background:#e4edf5}.signal-icon.leaf,.signal-spark.leaf i{color:#557a46;background:#e0eedc}.signal-card strong{display:inline-block;margin-top:18px;color:#344c3d;font-size:26px;font-weight:500}.signal-card small{margin-left:4px;color:#94a098;font-size:11px}.signal-spark{display:flex;align-items:flex-end;gap:3px;height:24px;margin-top:9px}.signal-spark i{display:block;width:7px;border-radius:5px}.signal-spark i:nth-child(1){height:9px}.signal-spark i:nth-child(2){height:15px}.signal-spark i:nth-child(3){height:11px}.signal-spark i:nth-child(4){height:19px}.signal-spark i:nth-child(5){height:14px}.dashboard-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:28px 34px;margin-top:38px}.activity-section,.recovery-section,.nutrition-section,.weekly-section{min-width:0}.activity-list{border-top:1px solid #dfe7df}.activity-row{display:grid;grid-template-columns:48px 34px 1fr 20px;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid #dfe7df}.activity-row time{color:#94a098;font-size:12px}.activity-icon{width:32px;height:32px;display:grid;place-items:center;border-radius:50%;background:#dcebdd;color:#557a46}.activity-row strong{color:#344c3d;font-size:14px}.activity-row p{margin-top:4px;color:#7e8b82;font-size:12px}.activity-check{color:#6d8871}.empty-strip{display:flex;align-items:center;gap:14px;padding:28px 0;border-top:1px solid #dfe7df;border-bottom:1px solid #dfe7df}.empty-strip>i{font-size:27px;color:#6d8871}.empty-strip strong{color:#344c3d}.empty-strip p{margin-top:5px;color:#7e8b82;font-size:12px}.recovery-section,.nutrition-section,.weekly-section{padding:26px 28px;border-radius:24px;background:#ecf4ea}.recovery-section .section-heading,.nutrition-section .section-heading,.weekly-section .section-heading{margin-bottom:10px}.recovery-score{display:flex;align-items:baseline;gap:8px}.recovery-score strong{font-size:55px;font-weight:500;color:#3f5f4b}.recovery-score span{color:#7e8b82;font-size:12px}.recovery-section>p{min-height:38px;color:#68756c;font-size:13px;line-height:1.6}.recovery-bar,.weekly-progress{height:7px;margin:15px 0;border-radius:6px;background:#d1e2d0}.recovery-bar i,.weekly-progress i{display:block;height:100%;border-radius:6px;background:#6d8871;transition:width .5s}.recovery-tags{display:flex;justify-content:space-between;color:#7e8b82;font-size:12px}.recovery-tags i{margin-right:4px;color:#557a46}.nutrition-section{background:#fff9f0}.nutrition-main{display:flex;align-items:center;gap:16px;min-height:92px}.nutrition-orb{width:52px;height:52px;display:grid;place-items:center;border-radius:18px;background:#f4e1c9;color:#a66e45;font-size:22px}.nutrition-main strong{color:#694b37;font-size:16px}.nutrition-main p{margin-top:7px;color:#856f61;font-size:12px;line-height:1.55}.nutrition-foot{display:flex;justify-content:space-between;align-items:center;padding-top:15px;border-top:1px solid #f0dfcb;color:#a0836c;font-size:11px}.nutrition-foot button{border:0;background:transparent;color:#a66e45;font-size:12px;cursor:pointer}.weekly-section{background:#f7faf5}.weekly-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.weekly-stats div+div{border-left:1px solid #dce7d9;padding-left:14px}.weekly-stats strong,.weekly-stats span{display:block}.weekly-stats strong{color:#3f5f4b;font-size:26px;font-weight:500}.weekly-stats span{margin-top:6px;color:#7e8b82;font-size:11px}.weekly-section p{color:#7e8b82;font-size:12px}.profile-popper .el-select-dropdown__item{font-size:12px}@media(max-width:1050px){.signal-grid{grid-template-columns:repeat(3,1fr)}.device-hero{grid-template-columns:1fr .75fr}}@media(max-width:760px){.welcome{display:block}.welcome-actions{margin-top:18px;flex-wrap:wrap}.profile-switch{width:calc(100% - 120px)}.device-hero{display:block}.device-copy{padding:30px 26px 12px}.device-visual{height:180px}.device-visual img{width:220px}.signal-grid{grid-template-columns:1fr 1fr}.dashboard-grid{grid-template-columns:1fr}.device-meta{gap:12px;flex-wrap:wrap}.device-copy h2{font-size:23px}}@media(max-width:470px){.signal-grid{grid-template-columns:1fr}.profile-switch{width:100%}.sync-button{width:100%}.weekly-stats{gap:8px}}
+.device-hub{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;margin-top:4px}.body-scan,.product-card{overflow:hidden;border-radius:24px;background:#eaf3e9;box-shadow:0 12px 36px rgba(63,95,75,.07)}.body-scan{min-height:430px;padding:28px 30px}.body-scan.is-off{background:#eff2ee}.scan-heading{display:flex;align-items:flex-start;justify-content:space-between}.scan-heading h2{margin-top:6px;color:#344c3d;font-size:22px}.scan-heading .connection-pill{color:#557a46;background:#dcebdd}.scan-stage{display:grid;grid-template-columns:.8fr 1.2fr;align-items:center;gap:16px;height:350px}.body-figure{position:relative;width:210px;height:330px;margin:0 auto;filter:drop-shadow(0 15px 16px rgba(63,95,75,.1))}.body-head{position:absolute;left:83px;top:5px;width:44px;height:52px;border-radius:48% 48% 44% 44%;background:linear-gradient(140deg,#d7e2d8,#a9c2ad)}.body-neck{position:absolute;left:94px;top:50px;width:23px;height:36px;background:#b5cbb8}.body-torso{position:absolute;left:62px;top:72px;width:87px;height:135px;border-radius:43% 43% 25% 25%;background:linear-gradient(100deg,#c4d7c6,#8eae94)}.body-arm{position:absolute;top:77px;width:21px;height:143px;border-radius:16px;background:#a9c4ad}.body-arm-left{left:38px;transform:rotate(7deg)}.body-arm-right{right:38px;transform:rotate(-7deg)}.body-leg{position:absolute;top:195px;width:28px;height:132px;border-radius:15px;background:linear-gradient(90deg,#9dbba2,#c4d7c6)}.body-leg-left{left:70px;transform:rotate(2deg)}.body-leg-right{right:70px;transform:rotate(-2deg)}.scan-ring{position:absolute;left:91px;width:28px;height:28px;border:2px solid #6d8871;border-radius:50%;box-shadow:0 0 0 5px rgba(109,136,113,.12);background:rgba(236,244,234,.5)}.ring-one{top:106px}.ring-two{top:171px}.scan-metrics{display:grid;gap:10px}.scan-metric{display:grid;grid-template-columns:34px 1fr 16px;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.72);box-shadow:0 5px 16px rgba(63,95,75,.05)}.scan-metric .signal-icon{width:32px;height:32px;display:grid;place-items:center;border-radius:10px}.scan-metric small,.scan-metric strong{display:block}.scan-metric small{color:#7e8b82;font-size:11px}.scan-metric strong{margin-top:3px;color:#344c3d;font-size:19px;font-weight:500}.scan-metric em{margin-left:4px;color:#94a098;font-size:10px;font-style:normal}.scan-metric>.el-icon-right{color:#a3b2a4;font-size:12px}.product-card{background:#f3f5f1}.product-image{position:relative;display:flex;align-items:center;justify-content:center;height:285px;overflow:hidden;background:linear-gradient(145deg,#e1f3ed,#cfe8dc)}.product-glow{position:absolute;width:215px;height:215px;border-radius:50%;background:rgba(255,255,255,.48);filter:blur(2px)}.product-image img{position:relative;width:285px;height:285px;object-fit:cover;mix-blend-mode:multiply;transform:scale(1.08)}.product-status{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);white-space:nowrap;padding:8px 14px;border-radius:18px;background:#3f5f4b;color:#fff;font-size:12px;font-weight:600;box-shadow:0 6px 12px rgba(63,95,75,.2)}.product-status i{margin-right:5px;color:#a8c66c}.product-status.off{background:#68756c}.product-info{padding:22px 24px 24px;background:rgba(255,255,255,.72)}.product-info h2{margin:10px 0 6px;color:#25342b;font-size:20px}.product-info p{color:#7e8b82;font-size:13px}.product-info .device-meta{margin-top:20px;color:#7e8b82}.product-info .device-meta button{color:#557a46}.product-info .device-meta span{font-size:11px}@media(max-width:1050px){.device-hub{grid-template-columns:1fr}.product-card{display:grid;grid-template-columns:.8fr 1.2fr}.product-image{height:100%}}@media(max-width:760px){.device-hub{display:block}.body-scan{padding:24px 18px}.scan-stage{grid-template-columns:1fr;height:auto;padding-top:20px}.body-figure{height:260px;transform:scale(.78);transform-origin:top center;margin-bottom:-55px}.product-card{display:block;margin-top:18px}.product-image{height:245px}.product-image img{width:245px;height:245px}}
+.body-figure{display:flex;align-items:center;justify-content:center;overflow:visible;width:320px;height:410px}.body-figure img{width:100%;height:100%;object-fit:contain;object-position:center;opacity:.92;filter:drop-shadow(0 18px 26px rgba(63,95,75,.12))}.body-figure .scan-ring{z-index:2}.body-figure .ring-one{top:141px}.body-figure .ring-two{top:216px}.product-image img{width:92%;height:92%;object-fit:contain;transform:none;filter:drop-shadow(0 18px 24px rgba(63,95,75,.2))}
+.device-hub{grid-template-columns:minmax(0,2.1fr) minmax(310px,.82fr);gap:18px}.body-scan{min-height:500px}.scan-stage{grid-template-columns:minmax(300px,.95fr) minmax(320px,1.05fr);height:420px}.body-figure{width:370px;height:455px}.body-figure .ring-one{top:158px;left:112px}.body-figure .ring-two{top:239px;left:112px}.scan-metric{padding:15px 16px}.scan-metric strong{font-size:22px}.product-card{display:flex;flex-direction:column}.product-image{height:330px}.product-info{flex:1}.dashboard-grid{grid-template-columns:minmax(0,2.1fr) minmax(310px,.82fr);gap:18px;margin-top:18px}.trend-panel,.suggestion-panel{min-width:0;padding:22px 24px;border:1px solid #e1e8df;border-radius:22px;background:#fcfbf7;box-shadow:0 10px 30px rgba(63,95,75,.05)}.range-pill{padding:7px 12px;border:1px solid #dce5da;border-radius:14px;color:#68756c;font-size:11px}.chart-legend{display:flex;gap:24px;color:#68756c;font-size:11px}.chart-legend span{display:flex;align-items:center;gap:6px}.chart-legend i{width:14px;height:4px;border-radius:3px}.steps-dot{background:#a8c9ad}.calorie-dot{background:#d4e5d3}.goal-dot{background:#246247}.trend-chart{height:240px;margin-top:4px}.suggestion-list{display:grid}.suggestion-list button{display:grid;grid-template-columns:38px 1fr 16px;align-items:center;gap:10px;padding:14px 0;border:0;border-bottom:1px solid #e1e8df;background:transparent;text-align:left;cursor:pointer}.suggestion-list button:last-child{border-bottom:0}.suggestion-list button>span{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#e3efe1;color:#3f5f4b}.suggestion-list strong{color:#344c3d;font-size:13px}.suggestion-list p{margin-top:3px;color:#7e8b82;font-size:11px;line-height:1.4}.suggestion-list button>.el-icon-arrow-right{color:#7e8b82}@media(max-width:1100px){.device-hub,.dashboard-grid{grid-template-columns:1fr}.scan-stage{grid-template-columns:.9fr 1.1fr}.product-card{display:grid;grid-template-columns:.9fr 1.1fr}.product-image{height:auto}}@media(max-width:760px){.scan-stage{grid-template-columns:1fr}.body-figure{width:310px;height:350px}.product-card{display:block}.product-image{height:280px}.trend-chart{height:220px}}
 </style>

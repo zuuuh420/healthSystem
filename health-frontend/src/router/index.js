@@ -34,6 +34,18 @@ const commonRoutes = [
     name: 'Profile',
     component: () => import('@/views/Profile.vue'),
     meta: { title: '个人中心' }
+  },
+  {
+    path: '/analysis',
+    name: 'HealthAnalysis',
+    component: () => import('@/views/HealthAnalysis.vue'),
+    meta: { title: '健康分析' }
+  },
+  {
+    path: '/report',
+    name: 'HealthReport',
+    component: () => import('@/views/HealthReport.vue'),
+    meta: { title: '健康周报' }
   }
 ]
 
